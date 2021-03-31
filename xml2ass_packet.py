@@ -40,8 +40,6 @@ danmakuLineHeight = 64  # 弹幕行高度
 danmakuFontSpace = 2  # 弹幕行间间隔
 timeDanmaku = 8  # 普通弹幕持续时间，默认8秒
 limitLineAmount = 11  # 屏上弹幕行数限制
-if len(sys.argv)>3:
-    limitLineAmount = sys.argv[3]
 danmakuPassageway = []  # 计算弹幕应该在哪一行出现
 for i in range(limitLineAmount):
     danmakuPassageway.append(0)
