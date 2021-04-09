@@ -96,7 +96,8 @@ for chat in chats:
     color = 'ffffff'
     color_important = 0
     for style in mail.split(' '):  # 颜色调整
-        if m := re.match(r'#([0-9A-Fa-f]{6})', style):
+        if re.match(r'#([0-9A-Fa-f]{6})', style):
+            m = re.match(r'#([0-9A-Fa-f]{6})', style)
             color_important = str(m[1])
         elif style in colorMap:
             color = colorMap[style]
@@ -347,7 +348,8 @@ if include_aa:  # 处理AA弹幕
                     size = int(fontSize * 1.44)
                 elif style == 'small':
                     size = int(fontSize * 0.64)
-                elif m := re.match(r'#([0-9A-Fa-f]{6})', style):
+                elif re.match(r'#([0-9A-Fa-f]{6})', style):
+                    m = re.match(r'#([0-9A-Fa-f]{6})', style)
                     color_important = str(m[1])
                 elif style in colorMap:
                     color = colorMap[style]

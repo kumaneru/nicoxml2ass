@@ -17,7 +17,8 @@ nicoId = []
 for i in range(len(chats)):
     text = chats[i].childNodes[0].data
     user_id = chats[i].getAttribute('user_id')
-    premium = chats[i].getAttribute('premium') if chats[i].hasAttribute('premium') else ''
+    premium = chats[i].getAttribute(
+        'premium') if chats[i].hasAttribute('premium') else ''
     if premium == '3':
         if '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text:
             nicoId.append(user_id)
@@ -97,7 +98,8 @@ for chat in chats:
     color = 'ffffff'
     color_important = 0
     for style in mail.split(' '):  # 颜色调整
-        if m := re.match(r'#([0-9A-Fa-f]{6})', style):
+        if re.match(r'#([0-9A-Fa-f]{6})', style):
+            m = re.match(r'#([0-9A-Fa-f]{6})', style)
             color_important = str(m[1])
         elif style in colorMap:
             color = colorMap[style]
@@ -177,7 +179,8 @@ for chat in chats:
                             if len(textO[i]) <= 7:
                                 textNow = '\\N'+textO[i]
                             elif 7 < len(textO[i]) <= 14:
-                                textNow = '\\N'+textO[i][0:7]+'\\N'+textO[i][7:]
+                                textNow = '\\N' + \
+                                    textO[i][0:7]+'\\N'+textO[i][7:]
                             elif len(textO[i]) > 14:
                                 textNow = '\\N'+textO[i][0:7]+'\\N' + \
                                     textO[i][7:14]+'\\N'+textO[i][14:]
@@ -344,7 +347,8 @@ if include_aa:  # 处理AA弹幕
                     size = int(fontSize * 1.44)
                 elif style == 'small':
                     size = int(fontSize * 0.64)
-                elif m := re.match(r'#([0-9A-Fa-f]{6})', style):
+                elif re.match(r'#([0-9A-Fa-f]{6})', style):
+                    m = re.match(r'#([0-9A-Fa-f]{6})', style)
                     color_important = str(m[1])
                 elif style in colorMap:
                     color = colorMap[style]
