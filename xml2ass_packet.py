@@ -17,10 +17,9 @@ nicoId = []
 for i in range(len(chats)):
     text = chats[i].childNodes[0].data
     user_id = chats[i].getAttribute('user_id')
-    premium = chats[i].getAttribute(
-        'premium') if chats[i].hasAttribute('premium') else ''
+    premium = chats[i].getAttribute('premium') if chats[i].hasAttribute('premium') else ''
     if premium == '3':
-        if '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text:
+        if '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text:
             nicoId.append(user_id)
         else:
             if user_id not in nicoId:
@@ -28,7 +27,7 @@ for i in range(len(chats)):
     elif premium == '2':
         nicoId.append(user_id)
     if i == len(chats) - 1 and len(officeId) == 0:
-        officeId.append(input('找不到运营id，请手动输入：'))
+        print('找不到运营id，请注意')
 
 # 弹幕参数
 AASize = 18  # AA弹幕字体大小
@@ -41,6 +40,8 @@ danmakuLineHeight = 64  # 弹幕行高度
 danmakuFontSpace = 2  # 弹幕行间间隔
 timeDanmaku = 8  # 普通弹幕持续时间，默认8秒
 limitLineAmount = 11  # 屏上弹幕行数限制
+if len(sys.argv)>=3:
+    limitLineAmount = int(sys.argv[2])
 danmakuPassageway = []  # 计算弹幕应该在哪一行出现
 for i in range(limitLineAmount):
     danmakuPassageway.append(0)
@@ -61,10 +62,8 @@ eventD = 'Comment: 0,0:00:00.00,0:00:00.00,Danmaku,,0,0,0,,普通弹幕\n'  # �
 officeBg = 'm 0 0 l '+str(videoWidth)+' 0 l '+str(videoWidth) + \
     ' '+str(OfficeBgHeight)+' l 0 '+str(OfficeBgHeight)  # 运营弹幕遮盖
 
-# 转换时间的函数
 
-
-def sec2hms(sec):
+def sec2hms(sec):# 转换时间的函数
     hms = str(int(sec//3600)).zfill(2)+':' + \
         str(int((sec % 3600)//60)).zfill(2)+':'+str(round(sec % 60, 2))
     return hms
@@ -179,8 +178,7 @@ for chat in chats:
                             if len(textO[i]) <= 7:
                                 textNow = '\\N'+textO[i]
                             elif 7 < len(textO[i]) <= 14:
-                                textNow = '\\N' + \
-                                    textO[i][0:7]+'\\N'+textO[i][7:]
+                                textNow = '\\N'+textO[i][0:7]+'\\N'+textO[i][7:]
                             elif len(textO[i]) > 14:
                                 textNow = '\\N'+textO[i][0:7]+'\\N' + \
                                     textO[i][7:14]+'\\N'+textO[i][14:]
@@ -202,13 +200,13 @@ for chat in chats:
                     XArray = [[math.floor(bgWidth/2)], [math.floor(videoWidth/3)-40, (math.floor(videoWidth/2)-math.floor(videoWidth/3))+math.floor(
                         videoWidth/2)+40], [math.floor(videoWidth/2)-bgWidth-40, math.floor(videoWidth/2), math.floor(videoWidth/2)+bgWidth+40]]
                     YArray = [[math.floor(videoHeight/2)], [math.floor(videoHeight/3), (math.floor(videoHeight/2)-math.floor(videoHeight/3))+math.floor(
-                        videoHeight/2)], [math.floor(videoHeight/2)-bgHeight-40, math.floor(videoHeight/2), math.floor(videoHeight/2)+bgHeight+40]]
+                        videoHeight/2)], [math.floor(videoHeight/2)-bgHeight-20, math.floor(videoHeight/2)+20, math.floor(videoHeight/2)+bgHeight+60]]
 
                     X = XArray[2]
                     Y = YArray[2]
 
                     if len(textR) == 4:
-                        bgWidth = math.floor(videoWidth/3)
+                        bgWidth = math.floor(videoWidth/4)
                         bgHeight = math.floor(videoHeight/4)
                         X = XArray[1]
                         Y = YArray[1]
@@ -222,10 +220,11 @@ for chat in chats:
                         Y = YArray[1]
 
                     elif len(textR) > 6:
+                        bgHeight = math.floor(videoHeight/4.5)
                         Y = YArray[2]
 
-                    numBg = 'm 0 0 l '+str(math.floor(fontSize_anketo*1.5))+' 0 l '+str(
-                        math.floor(fontSize_anketo*1.5))+' 0 l 0 '+str(math.floor(fontSize_anketo*1.5))
+                    numBg = 'm 0 0 l '+str(math.floor(fontSize_anketo*1.25))+' 0 l '+str(
+                        math.floor(fontSize_anketo*1.25))+' 0 l 0 '+str(math.floor(fontSize_anketo*1.25))
                     bg = 'm 0 0 l ' + \
                         str(bgWidth)+' 0 l '+str(bgWidth)+' ' + \
                         str(bgHeight)+' l 0 '+str(bgHeight)
@@ -237,9 +236,9 @@ for chat in chats:
                             if num == len(textR):
                                 continue
                             voteNumBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&HFFFFC8&\\pos('+str(X[i]-math.floor(
-                                bgWidth/2)+math.floor(fontSize_anketo*1.5/2))+','+str(Y[j]-math.floor(bgHeight/2)+math.floor(fontSize_anketo*1.5/2))+')}'+numBg+'\n'
+                                bgWidth/2)+math.floor(fontSize_anketo*1.25/2))+','+str(Y[j]-math.floor(bgHeight/2)+math.floor(fontSize_anketo*1.25/2))+')}'+numBg+'\n'
                             voteNumText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\fs'+str(fontSize_anketo)+'\\an5\\bord0\\1c&HD5A07B&\\pos('+str(
-                                X[i]-math.floor(bgWidth/2)+math.floor(fontSize_anketo/2))+','+str(Y[j]-math.floor(bgHeight/2)+math.floor(fontSize_anketo/2))+')}'+str(num+1)+'\n'
+                                X[i]-math.floor(bgWidth/2)+math.floor(fontSize_anketo/3))+','+str(Y[j]-math.floor(bgHeight/2)+math.floor(fontSize_anketo/3))+')}'+str(num+1)+'\n'
                             voteBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV + \
                                 ',Anketo,,0,0,0,,{\\an5\\p1\\3c&HFFFFC8&\\bord6\\1c&HD5A07B&\\1a&H78&\\pos('+str(
                                     X[i])+','+str(Y[j])+')}'+bg+'\n'
