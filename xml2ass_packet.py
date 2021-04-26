@@ -87,7 +87,7 @@ for chat in chats:
     # 过滤弹幕
     if '※ NGコメント' in text or 'clear' in text:
         continue
-    elif user_id in nicoId and text[0] == '/' and text[:5] != '/perm' and text[:5] != '/vote':
+    elif user_id in nicoId:
         continue
     if chat.getAttribute('vpos') == '':
         continue
