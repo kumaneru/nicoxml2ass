@@ -20,7 +20,7 @@ for i in range(len(chats)):
     user_id = chats[i]['@user_id']
     premium = chats[i]['@premium'] if '@premium' in chats[i] else ''
     if premium == '3':
-        if '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text:
+        if '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text:
             nicoId.append(user_id)
         else:
             if user_id not in nicoId:
