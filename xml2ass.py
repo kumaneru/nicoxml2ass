@@ -68,13 +68,6 @@ def sec2hms(sec):# 转换时间的函数
     return hms
 
 
-def sec2hms_q(sec):
-    sec += 15
-    hms = str(int(sec//3600)).zfill(2)+':' + \
-        str(int((sec % 3600)//60)).zfill(2)+':'+str(round(sec % 60, 2))
-    return hms
-
-
 # 处理弹幕
 for chat in chats:
     text = chat['#text']  # 文本
@@ -138,11 +131,11 @@ for chat in chats:
                     textO = []
                     continue
 
-                endTimeV = sec2hms_q(round(vpos/100, 2))
-                eventQBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
+                endTimeV = sec2hms(round(vpos/100, 2))
+                eventQBg = 'Dialogue: 4,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
                     videoWidth/2)+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
                 eventQText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\pos('+str(videoWidth/2)+','+str(
-                    math.floor(OfficeBgHeight/2))+')\\1c&HFF8000&\\bord0\\fsp0}Q.{\\1c&HFFFFFF&}'+textQ+'\n'
+                    math.floor(OfficeBgHeight/2))+')\\1c&HFF8000&\\bord0\\fsp0}Q.{\\1c&HFFFFFF&}'+textQ.replace('<br>','\\N')+'\n'
                 eventQmask = 'Dialogue: 3,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\bord0\\1c&H000000&\\pos('+str(videoWidth/2)+','+str(
                     videoHeight/2)+')\\1a&HC8&}'+'m 0 0 l '+str(videoWidth+20)+' 0 l '+str(videoWidth+20)+' '+str(videoHeight+20)+' l 0 '+str(videoHeight+20)+'\n'
                 if len(textQ) > 50:
@@ -259,7 +252,7 @@ for chat in chats:
                                 voteResultext + voteNumBg + voteNumText
                 textR = []
         else:  # 处理非投票运营弹幕
-            eventBg = 'Dialogue: 5,'+startTime+','+endTime+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
+            eventBg = 'Dialogue: 4,'+startTime+','+endTime+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
                 videoWidth/2)+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
             if 'a href' in text:
                 link = re.compile('<a href=(.*?)><u>')
