@@ -46,6 +46,7 @@ danmakuPassageway = []  # 计算弹幕应该在哪一行出现
 for i in range(limitLineAmount):
     danmakuPassageway.append(0)
 include_aa = False  # 判断是否有AA弹幕
+vote_check = False  # 判断投票是否开启
 
 # 颜色列表
 colorMap = {'black': '000000', 'white': 'FFFFFF', 'red': 'FF0000', 'green': '00ff00', 'yellow': 'FFFF00', 'blue': '0000FF', 'orange': 'ffcc00', 'pink': 'FF8080', 'cyan': '0FFFF', 'purple': 'C000FF', 'niconicowhite': 'cccc99', 'white2': 'cccc99', 'truered': 'cc0033',
@@ -100,7 +101,7 @@ for chat in chats:
         if color == '000000':
             assColor += '\\3c&HFFFFFF&'
     if user_id in officeId:  # 处理运营弹幕
-        if re.search('/vote', text) != None:  # 处理投票弹幕
+        if re.search('/vote', text) != None and re.search('/vote stop', text) == None:  # 处理投票开始和投票结果
             if '"' in text:
                 textV = text.split(' ', 2)[0:2]
                 text = text.split(' ', 2)[2]
@@ -119,19 +120,34 @@ for chat in chats:
                     textV += text.split(' ')
             else:
                 textV = text.split(' ')
+
             if textV[1] == 'start':
                 startTimeQ = startTime
                 textQ = textV[2]
                 textO = textV[3:]
+                vote_check = True
             elif textV[1] == 'showresult':
                 startTimeR = startTime
                 textR = textV[3:]
-            elif textV[1] == 'stop':
-                if textR == []:
-                    textV = []
-                    textQ = []
-                    textO = []
-                    continue
+        elif vote_check:  # 生成投票
+            if '"' in text:
+                textV = text.split(' ', 2)[0:2]
+                text = text.split(' ', 2)[2]
+                if text[0] == '"':
+                    textV += text.replace('" "', '"').replace('"',
+                                                              '', 1).split('"', 1)[0:1]
+                    text = text.replace('" "', '"').replace(
+                        '"', '', 1).split('"', 1)[1]
+                    text = text[1:]
+                else:
+                    textV += text.split(' ', 1)[0:1]
+                    text = text.split(' ', 1)[1]
+                if text[-1] == '"':
+                    textV += text.replace('" "', '"').split('"')
+                else:
+                    textV += text.split(' ')
+            else:
+                textV = text.split(' ')
 
                 endTimeV = sec2hms(round(vpos/100, 2))
                 eventQBg = 'Dialogue: 4,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
@@ -177,14 +193,15 @@ for chat in chats:
                             voteText = 'Dialogue: 5,'+startTimeQ+','+endTimeV + \
                                 ',Anketo,,0,0,0,,{\\an5\\bord0\\1c&HFFFFFF&\\pos('+str(
                                     X[i])+','+str(Y[j])+')}'+textNow+'\n'
-                            voteResultBg = 'Dialogue: 5,'+startTimeR+','+endTimeV + \
-                                ',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&H3E2E2A&\\pos('+str(
-                                    X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+resultBg+'\n'
-                            voteResultext = 'Dialogue: 5,'+startTimeR+','+endTimeV + ',Anketo,,0,0,0,,{\\fs'+str(
-                                fontSize_anketo)+'\\an5\\bord0\\1c&H76FAF8&\\pos('+str(X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+str(int(textR[i])/10)+'%\n'
+                            eventO += voteBg + voteText + voteNumBg + voteNumText
+                            if textR != []:
+                                voteResultBg = 'Dialogue: 5,'+startTimeR+','+endTimeV + \
+                                    ',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&H3E2E2A&\\pos('+str(
+                                        X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+resultBg+'\n'
+                                voteResultext = 'Dialogue: 5,'+startTimeR+','+endTimeV + ',Anketo,,0,0,0,,{\\fs'+str(
+                                    fontSize_anketo)+'\\an5\\bord0\\1c&H76FAF8&\\pos('+str(X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+str(int(textR[i])/10)+'%\n'
 
-                            eventO += voteBg + voteText + voteResultBg + \
-                                voteResultext + voteNumBg + voteNumText
+                                eventO += voteResultBg + voteResultext
                 elif len(textR) >= 4:
                     bgWidth = math.floor(videoWidth/5)
                     bgHeight = math.floor(videoHeight/4)
@@ -197,21 +214,21 @@ for chat in chats:
                     X = XArray[2]
                     Y = YArray[2]
 
-                    if len(textR) == 4:
+                    if len(textO) == 4:
                         bgWidth = math.floor(videoWidth/4)
                         bgHeight = math.floor(videoHeight/4)
                         X = XArray[1]
                         Y = YArray[1]
 
-                    elif len(textR) >= 5 and len(textR) <= 6:
+                    elif len(textO) >= 5 and len(textO) <= 6:
                         bgHeight = math.floor(videoHeight/4)
                         Y = YArray[1]
 
-                    elif len(textR) == 8:
+                    elif len(textO) == 8:
                         X = [160, 480, 800, 1120]
                         Y = YArray[1]
 
-                    elif len(textR) > 6:
+                    elif len(textO) > 6:
                         bgHeight = math.floor(videoHeight/4.5)
                         Y = YArray[2]
 
@@ -225,7 +242,7 @@ for chat in chats:
                     num = 0
                     for j in range(len(Y)):
                         for i in range(len(X)):
-                            if num == len(textR):
+                            if num == len(textO):
                                 continue
                             voteNumBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&HFFFFC8&\\pos('+str(X[i]-math.floor(
                                 bgWidth/2)+math.floor(fontSize_anketo*1.25/2))+','+str(Y[j]-math.floor(bgHeight/2)+math.floor(fontSize_anketo*1.25/2))+')}'+numBg+'\n'
@@ -243,17 +260,19 @@ for chat in chats:
                                     textO[num][7:14]+'\\N'+textO[num][14:]
                             voteText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\fs'+str(
                                 fontSize_anketo)+'\\an5\\bord0\\1c&HFFFFFF&\\pos('+str(X[i])+','+str(Y[j])+')}'+textNow+'\n'
-                            voteResultBg = 'Dialogue: 5,'+startTimeR+','+endTimeV + \
-                                ',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&H3E2E2A&\\pos('+str(
-                                    X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+resultBg+'\n'
-                            voteResultext = 'Dialogue: 5,'+startTimeR+','+endTimeV+',Anketo,,0,0,0,,{\\fs'+str(
-                                fontSize_anketo)+'\\an5\\bord0\\1c&H76FAF8&\\pos('+str(X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+str(int(textR[num])/10)+'%\n'
+                            eventO += voteBg + voteText + voteNumBg + voteNumText
+                            if textR != []:
+                                voteResultBg = 'Dialogue: 5,'+startTimeR+','+endTimeV + \
+                                    ',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&H3E2E2A&\\pos('+str(
+                                        X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+resultBg+'\n'
+                                voteResultext = 'Dialogue: 5,'+startTimeR+','+endTimeV+',Anketo,,0,0,0,,{\\fs'+str(
+                                    fontSize_anketo)+'\\an5\\bord0\\1c&H76FAF8&\\pos('+str(X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+str(int(textR[num])/10)+'%\n'
+                                eventO += voteResultBg + voteResultext
                             num += 1
-
-                            eventO += voteBg + voteText + voteResultBg + \
-                                voteResultext + voteNumBg + voteNumText
                 textR = []
-        else:  # 处理非投票运营弹幕
+                vote_check = False
+
+        if re.search('/vote', text) == None:  # 处理非投票运营弹幕
             eventBg = 'Dialogue: 4,'+startTime+','+endTime+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
                 videoWidth/2)+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
             if 'a href' in text:
