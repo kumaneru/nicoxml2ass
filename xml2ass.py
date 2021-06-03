@@ -14,19 +14,12 @@ chats = sorted(chats, key=lambda x: x['@vpos'].zfill(10))  # 按vpos排序
 
 # 获取运营弹幕ID和需要过滤弹幕的ID
 officeId = []
-nicoId = ['900000000']
 for i in range(len(chats)):
     text = chats[i]['#text']
     user_id = chats[i]['@user_id']
     premium = chats[i]['@premium'] if '@premium' in chats[i] else ''
     if premium == '3':
-        if '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text:
-            nicoId.append(user_id)
-        else:
-            if user_id not in nicoId:
-                officeId.append(user_id)
-    elif premium == '2':
-        nicoId.append(user_id)
+        officeId.append(user_id)
     if i == len(chats) - 1 and len(officeId) == 0:
         officeId.append(input('找不到运营id，请手动输入：'))
 
@@ -76,11 +69,11 @@ for chat in chats:
     mail = chat['@mail'] if '@mail' in chat else ''  # mail,颜色，位置，大小，AA
     premium = chat['@premium'] if '@premium' in chat else ''
     # 过滤弹幕
-    if '※ NGコメント' in text or 'clear' in text:
+    if '※ NGコメント' in text or 'clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text:
         continue
-    elif user_id in nicoId:
+    elif premium == '2':
         continue
-    if chat['@vpos'] == '':
+    elif chat['@vpos'] == '':
         continue
     vpos = int(chat['@vpos'])  # 读取时间
     startTime = sec2hms(round(vpos/100, 2))  # 转换开始时间
