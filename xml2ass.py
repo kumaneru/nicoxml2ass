@@ -69,7 +69,7 @@ for chat in chats:
     mail = chat['@mail'] if '@mail' in chat else ''  # mail,颜色，位置，大小，AA
     premium = chat['@premium'] if '@premium' in chat else ''
     # 过滤弹幕
-    if '※ NGコメント' in text or 'clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text:
+    if '※ NGコメント' in text or '/clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text or '/info' in text:
         continue
     elif premium == '2':
         continue
@@ -97,10 +97,8 @@ for chat in chats:
                 textV = text.split(' ', 2)[0:2]
                 text = text.split(' ', 2)[2]
                 if text[0] == '"':
-                    textV += text.replace('" "', '"').replace('"',
-                                                              '', 1).split('"', 1)[0:1]
-                    text = text.replace('" "', '"').replace(
-                        '"', '', 1).split('"', 1)[1]
+                    textV += text.replace('"', '', 1).split('"', 1)[0:1]
+                    text = text.replace('"', '', 1).split('"', 1)[1]
                     text = text[1:]
                 else:
                     textV += text.split(' ', 1)[0:1]
@@ -120,148 +118,131 @@ for chat in chats:
             elif textV[1] == 'showresult':
                 startTimeR = startTime
                 textR = textV[3:]
+            continue
         elif vote_check:  # 生成投票
-            if '"' in text:
-                textV = text.split(' ', 2)[0:2]
-                text = text.split(' ', 2)[2]
-                if text[0] == '"':
-                    textV += text.replace('" "', '"').replace('"',
-                                                              '', 1).split('"', 1)[0:1]
-                    text = text.replace('" "', '"').replace(
-                        '"', '', 1).split('"', 1)[1]
-                    text = text[1:]
-                else:
-                    textV += text.split(' ', 1)[0:1]
-                    text = text.split(' ', 1)[1]
-                if text[-1] == '"':
-                    textV += text.replace('" "', '"').split('"')
-                else:
-                    textV += text.split(' ')
-            else:
-                textV = text.split(' ')
+            endTimeV = sec2hms(round(vpos/100, 2))
+            eventQBg = 'Dialogue: 4,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
+                videoWidth/2)+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
+            eventQText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\pos('+str(videoWidth/2)+','+str(
+                math.floor(OfficeBgHeight/2))+')\\1c&HFF8000&\\bord0\\fsp0}Q.{\\1c&HFFFFFF&}'+textQ.replace('<br>', '\\N')+'\n'
+            eventQmask = 'Dialogue: 3,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\bord0\\1c&H000000&\\pos('+str(videoWidth/2)+','+str(
+                videoHeight/2)+')\\1a&HC8&}'+'m 0 0 l '+str(videoWidth+20)+' 0 l '+str(videoWidth+20)+' '+str(videoHeight+20)+' l 0 '+str(videoHeight+20)+'\n'
+            if len(textQ) > 50:
+                eventQText = eventQText.replace('fsp0', 'fsp0\\fs30')
+            eventO += eventQBg + eventQText + eventQmask
+            fontSize_anketo = math.floor(fontSize/4*3)
+            if len(textO) <= 3:
+                bgWidth = math.floor(videoWidth/4)
+                bgHeight = math.floor(videoHeight/3)
+                XArray = [[math.floor(bgWidth/2)], [math.floor(videoWidth/3)-40, (math.floor(videoWidth/2)-math.floor(videoWidth/3))+math.floor(
+                    videoWidth/2)+40], [math.floor(videoWidth/2)-bgWidth-40, math.floor(videoWidth/2), math.floor(videoWidth/2)+bgWidth+40]]
+                numBg = 'm 0 0 l ' + \
+                    str(fontSize*1.5)+' 0 l '+str(fontSize*1.5) + \
+                    ' 0 l 0 '+str(fontSize*1.5)
+                bg = 'm 0 0 l ' + \
+                    str(bgWidth)+' 0 l '+str(bgWidth)+' ' + \
+                    str(bgHeight)+' l 0 '+str(bgHeight)
+                resultBg = 'm 0 0 s 150 0 150 60 0 60 c'
+                X = XArray[len(textO)-1]
+                Y = [360]
+                for j in range(len(Y)):
+                    for i in range(len(X)):
+                        voteNumBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&HFFFFC8&\\pos('+str(
+                            X[i]-math.floor(bgWidth/2)+fontSize*0.75)+','+str(Y[j]-math.floor(bgHeight/2)+fontSize*0.75)+')}'+numBg+'\n'
+                        voteNumText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\an5\\bord0\\1c&HD5A07B&\\pos('+str(X[i]-math.floor(
+                            bgWidth/2)+math.floor(fontSize/2))+','+str(Y[j]-math.floor(bgHeight/2)+math.floor(fontSize/2))+')}'+str(i+1)+'\n'
+                        voteBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV + \
+                            ',Anketo,,0,0,0,,{\\an5\\p1\\3c&HFFFFC8&\\bord6\\1c&HD5A07B&\\1a&H78&\\pos('+str(
+                                X[i])+','+str(Y[j])+')}'+bg+'\n'
+                        if len(textO[i]) <= 7:
+                            textNow = '\\N'+textO[i]
+                        elif 7 < len(textO[i]) <= 14:
+                            textNow = '\\N' + \
+                                textO[i][0:7]+'\\N'+textO[i][7:]
+                        elif len(textO[i]) > 14:
+                            textNow = '\\N'+textO[i][0:7]+'\\N' + \
+                                textO[i][7:14]+'\\N'+textO[i][14:]
+                        voteText = 'Dialogue: 5,'+startTimeQ+','+endTimeV + \
+                            ',Anketo,,0,0,0,,{\\an5\\bord0\\1c&HFFFFFF&\\pos('+str(
+                                X[i])+','+str(Y[j])+')}'+textNow+'\n'
+                        eventO += voteBg + voteText + voteNumBg + voteNumText
+                        if textR != []:
+                            voteResultBg = 'Dialogue: 5,'+startTimeR+','+endTimeV + \
+                                ',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&H3E2E2A&\\pos('+str(
+                                    X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+resultBg+'\n'
+                            voteResultext = 'Dialogue: 5,'+startTimeR+','+endTimeV + ',Anketo,,0,0,0,,{\\fs'+str(
+                                fontSize_anketo)+'\\an5\\bord0\\1c&H76FAF8&\\pos('+str(X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+str(int(textR[i])/10)+'%\n'
 
-                endTimeV = sec2hms(round(vpos/100, 2))
-                eventQBg = 'Dialogue: 4,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
-                    videoWidth/2)+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
-                eventQText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\pos('+str(videoWidth/2)+','+str(
-                    math.floor(OfficeBgHeight/2))+')\\1c&HFF8000&\\bord0\\fsp0}Q.{\\1c&HFFFFFF&}'+textQ.replace('<br>','\\N')+'\n'
-                eventQmask = 'Dialogue: 3,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\bord0\\1c&H000000&\\pos('+str(videoWidth/2)+','+str(
-                    videoHeight/2)+')\\1a&HC8&}'+'m 0 0 l '+str(videoWidth+20)+' 0 l '+str(videoWidth+20)+' '+str(videoHeight+20)+' l 0 '+str(videoHeight+20)+'\n'
-                if len(textQ) > 50:
-                    eventQText = eventQText.replace('fsp0', 'fsp0\\fs30')
-                eventO += eventQBg + eventQText + eventQmask
-                fontSize_anketo = math.floor(fontSize/4*3)
-                if len(textO) <= 3:
+                            eventO += voteResultBg + voteResultext
+            elif len(textR) >= 4:
+                bgWidth = math.floor(videoWidth/5)
+                bgHeight = math.floor(videoHeight/4)
+
+                XArray = [[math.floor(bgWidth/2)], [math.floor(videoWidth/3)-40, (math.floor(videoWidth/2)-math.floor(videoWidth/3))+math.floor(
+                    videoWidth/2)+40], [math.floor(videoWidth/2)-bgWidth-40, math.floor(videoWidth/2), math.floor(videoWidth/2)+bgWidth+40]]
+                YArray = [[math.floor(videoHeight/2)], [math.floor(videoHeight/3), (math.floor(videoHeight/2)-math.floor(videoHeight/3))+math.floor(
+                    videoHeight/2)], [math.floor(videoHeight/2)-bgHeight-20, math.floor(videoHeight/2)+20, math.floor(videoHeight/2)+bgHeight+60]]
+
+                X = XArray[2]
+                Y = YArray[2]
+
+                if len(textO) == 4:
                     bgWidth = math.floor(videoWidth/4)
-                    bgHeight = math.floor(videoHeight/3)
-                    XArray = [[math.floor(bgWidth/2)], [math.floor(videoWidth/3)-40, (math.floor(videoWidth/2)-math.floor(videoWidth/3))+math.floor(
-                        videoWidth/2)+40], [math.floor(videoWidth/2)-bgWidth-40, math.floor(videoWidth/2), math.floor(videoWidth/2)+bgWidth+40]]
-                    numBg = 'm 0 0 l ' + \
-                        str(fontSize*1.5)+' 0 l '+str(fontSize*1.5) + \
-                        ' 0 l 0 '+str(fontSize*1.5)
-                    bg = 'm 0 0 l ' + \
-                        str(bgWidth)+' 0 l '+str(bgWidth)+' ' + \
-                        str(bgHeight)+' l 0 '+str(bgHeight)
-                    resultBg = 'm 0 0 s 150 0 150 60 0 60 c'
-                    X = XArray[len(textO)-1]
-                    Y = [360]
-                    for j in range(len(Y)):
-                        for i in range(len(X)):
-                            voteNumBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&HFFFFC8&\\pos('+str(
-                                X[i]-math.floor(bgWidth/2)+fontSize*0.75)+','+str(Y[j]-math.floor(bgHeight/2)+fontSize*0.75)+')}'+numBg+'\n'
-                            voteNumText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\an5\\bord0\\1c&HD5A07B&\\pos('+str(X[i]-math.floor(
-                                bgWidth/2)+math.floor(fontSize/2))+','+str(Y[j]-math.floor(bgHeight/2)+math.floor(fontSize/2))+')}'+str(i+1)+'\n'
-                            voteBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV + \
-                                ',Anketo,,0,0,0,,{\\an5\\p1\\3c&HFFFFC8&\\bord6\\1c&HD5A07B&\\1a&H78&\\pos('+str(
-                                    X[i])+','+str(Y[j])+')}'+bg+'\n'
-                            if len(textO[i]) <= 7:
-                                textNow = '\\N'+textO[i]
-                            elif 7 < len(textO[i]) <= 14:
-                                textNow = '\\N'+textO[i][0:7]+'\\N'+textO[i][7:]
-                            elif len(textO[i]) > 14:
-                                textNow = '\\N'+textO[i][0:7]+'\\N' + \
-                                    textO[i][7:14]+'\\N'+textO[i][14:]
-                            voteText = 'Dialogue: 5,'+startTimeQ+','+endTimeV + \
-                                ',Anketo,,0,0,0,,{\\an5\\bord0\\1c&HFFFFFF&\\pos('+str(
-                                    X[i])+','+str(Y[j])+')}'+textNow+'\n'
-                            eventO += voteBg + voteText + voteNumBg + voteNumText
-                            if textR != []:
-                                voteResultBg = 'Dialogue: 5,'+startTimeR+','+endTimeV + \
-                                    ',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&H3E2E2A&\\pos('+str(
-                                        X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+resultBg+'\n'
-                                voteResultext = 'Dialogue: 5,'+startTimeR+','+endTimeV + ',Anketo,,0,0,0,,{\\fs'+str(
-                                    fontSize_anketo)+'\\an5\\bord0\\1c&H76FAF8&\\pos('+str(X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+str(int(textR[i])/10)+'%\n'
-
-                                eventO += voteResultBg + voteResultext
-                elif len(textR) >= 4:
-                    bgWidth = math.floor(videoWidth/5)
                     bgHeight = math.floor(videoHeight/4)
+                    X = XArray[1]
+                    Y = YArray[1]
 
-                    XArray = [[math.floor(bgWidth/2)], [math.floor(videoWidth/3)-40, (math.floor(videoWidth/2)-math.floor(videoWidth/3))+math.floor(
-                        videoWidth/2)+40], [math.floor(videoWidth/2)-bgWidth-40, math.floor(videoWidth/2), math.floor(videoWidth/2)+bgWidth+40]]
-                    YArray = [[math.floor(videoHeight/2)], [math.floor(videoHeight/3), (math.floor(videoHeight/2)-math.floor(videoHeight/3))+math.floor(
-                        videoHeight/2)], [math.floor(videoHeight/2)-bgHeight-20, math.floor(videoHeight/2)+20, math.floor(videoHeight/2)+bgHeight+60]]
+                elif len(textO) >= 5 and len(textO) <= 6:
+                    bgHeight = math.floor(videoHeight/4)
+                    Y = YArray[1]
 
-                    X = XArray[2]
+                elif len(textO) == 8:
+                    X = [160, 480, 800, 1120]
+                    Y = YArray[1]
+
+                elif len(textO) > 6:
+                    bgHeight = math.floor(videoHeight/4.5)
                     Y = YArray[2]
 
-                    if len(textO) == 4:
-                        bgWidth = math.floor(videoWidth/4)
-                        bgHeight = math.floor(videoHeight/4)
-                        X = XArray[1]
-                        Y = YArray[1]
+                numBg = 'm 0 0 l '+str(math.floor(fontSize_anketo*1.25))+' 0 l '+str(
+                    math.floor(fontSize_anketo*1.25))+' 0 l 0 '+str(math.floor(fontSize_anketo*1.25))
+                bg = 'm 0 0 l ' + \
+                    str(bgWidth)+' 0 l '+str(bgWidth)+' ' + \
+                    str(bgHeight)+' l 0 '+str(bgHeight)
+                resultBg = 'm 0 0 s 150 0 150 60 0 60 c'
 
-                    elif len(textO) >= 5 and len(textO) <= 6:
-                        bgHeight = math.floor(videoHeight/4)
-                        Y = YArray[1]
-
-                    elif len(textO) == 8:
-                        X = [160, 480, 800, 1120]
-                        Y = YArray[1]
-
-                    elif len(textO) > 6:
-                        bgHeight = math.floor(videoHeight/4.5)
-                        Y = YArray[2]
-
-                    numBg = 'm 0 0 l '+str(math.floor(fontSize_anketo*1.25))+' 0 l '+str(
-                        math.floor(fontSize_anketo*1.25))+' 0 l 0 '+str(math.floor(fontSize_anketo*1.25))
-                    bg = 'm 0 0 l ' + \
-                        str(bgWidth)+' 0 l '+str(bgWidth)+' ' + \
-                        str(bgHeight)+' l 0 '+str(bgHeight)
-                    resultBg = 'm 0 0 s 150 0 150 60 0 60 c'
-
-                    num = 0
-                    for j in range(len(Y)):
-                        for i in range(len(X)):
-                            if num == len(textO):
-                                continue
-                            voteNumBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&HFFFFC8&\\pos('+str(X[i]-math.floor(
-                                bgWidth/2)+math.floor(fontSize_anketo*1.25/2))+','+str(Y[j]-math.floor(bgHeight/2)+math.floor(fontSize_anketo*1.25/2))+')}'+numBg+'\n'
-                            voteNumText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\fs'+str(fontSize_anketo)+'\\an5\\bord0\\1c&HD5A07B&\\pos('+str(
-                                X[i]-math.floor(bgWidth/2)+math.floor(fontSize_anketo/3))+','+str(Y[j]-math.floor(bgHeight/2)+math.floor(fontSize_anketo/3))+')}'+str(num+1)+'\n'
-                            voteBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV + \
-                                ',Anketo,,0,0,0,,{\\an5\\p1\\3c&HFFFFC8&\\bord6\\1c&HD5A07B&\\1a&H78&\\pos('+str(
-                                    X[i])+','+str(Y[j])+')}'+bg+'\n'
-                            if len(textO[num]) <= 7:
-                                textNow = textO[num]
-                            elif 7 < len(textO[num]) <= 14:
-                                textNow = textO[num][0:7]+'\\N'+textO[num][7:]
-                            elif len(textO[num]) > 14:
-                                textNow = textO[num][0:7]+'\\N' + \
-                                    textO[num][7:14]+'\\N'+textO[num][14:]
-                            voteText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\fs'+str(
-                                fontSize_anketo)+'\\an5\\bord0\\1c&HFFFFFF&\\pos('+str(X[i])+','+str(Y[j])+')}'+textNow+'\n'
-                            eventO += voteBg + voteText + voteNumBg + voteNumText
-                            if textR != []:
-                                voteResultBg = 'Dialogue: 5,'+startTimeR+','+endTimeV + \
-                                    ',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&H3E2E2A&\\pos('+str(
-                                        X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+resultBg+'\n'
-                                voteResultext = 'Dialogue: 5,'+startTimeR+','+endTimeV+',Anketo,,0,0,0,,{\\fs'+str(
-                                    fontSize_anketo)+'\\an5\\bord0\\1c&H76FAF8&\\pos('+str(X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+str(int(textR[num])/10)+'%\n'
-                                eventO += voteResultBg + voteResultext
-                            num += 1
-                textR = []
-                vote_check = False
+                num = 0
+                for j in range(len(Y)):
+                    for i in range(len(X)):
+                        if num == len(textO):
+                            continue
+                        voteNumBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&HFFFFC8&\\pos('+str(X[i]-math.floor(
+                            bgWidth/2)+math.floor(fontSize_anketo*1.25/2))+','+str(Y[j]-math.floor(bgHeight/2)+math.floor(fontSize_anketo*1.25/2))+')}'+numBg+'\n'
+                        voteNumText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\fs'+str(fontSize_anketo)+'\\an5\\bord0\\1c&HD5A07B&\\pos('+str(
+                            X[i]-math.floor(bgWidth/2)+math.floor(fontSize_anketo/3))+','+str(Y[j]-math.floor(bgHeight/2)+math.floor(fontSize_anketo/3))+')}'+str(num+1)+'\n'
+                        voteBg = 'Dialogue: 5,'+startTimeQ+','+endTimeV + \
+                            ',Anketo,,0,0,0,,{\\an5\\p1\\3c&HFFFFC8&\\bord6\\1c&HD5A07B&\\1a&H78&\\pos('+str(
+                                X[i])+','+str(Y[j])+')}'+bg+'\n'
+                        if len(textO[num]) <= 7:
+                            textNow = textO[num]
+                        elif 7 < len(textO[num]) <= 14:
+                            textNow = textO[num][0:7]+'\\N'+textO[num][7:]
+                        elif len(textO[num]) > 14:
+                            textNow = textO[num][0:7]+'\\N' + \
+                                textO[num][7:14]+'\\N'+textO[num][14:]
+                        voteText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Anketo,,0,0,0,,{\\fs'+str(
+                            fontSize_anketo)+'\\an5\\bord0\\1c&HFFFFFF&\\pos('+str(X[i])+','+str(Y[j])+')}'+textNow+'\n'
+                        eventO += voteBg + voteText + voteNumBg + voteNumText
+                        if textR != []:
+                            voteResultBg = 'Dialogue: 5,'+startTimeR+','+endTimeV + \
+                                ',Anketo,,0,0,0,,{\\an5\\p1\\bord0\\1c&H3E2E2A&\\pos('+str(
+                                    X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+resultBg+'\n'
+                            voteResultext = 'Dialogue: 5,'+startTimeR+','+endTimeV+',Anketo,,0,0,0,,{\\fs'+str(
+                                fontSize_anketo)+'\\an5\\bord0\\1c&H76FAF8&\\pos('+str(X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+str(int(textR[num])/10)+'%\n'
+                            eventO += voteResultBg + voteResultext
+                        num += 1
+            textR = []
+            vote_check = False
 
         if re.search('/vote', text) == None:  # 处理非投票运营弹幕
             eventBg = 'Dialogue: 4,'+startTime+','+endTime+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
