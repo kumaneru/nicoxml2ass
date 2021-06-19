@@ -114,6 +114,7 @@ for chat in chats:
                 startTimeQ = startTime
                 textQ = textV[2]
                 textO = textV[3:]
+                textR = []
                 vote_check = True
             elif textV[1] == 'showresult':
                 startTimeR = startTime
@@ -241,7 +242,6 @@ for chat in chats:
                                 fontSize_anketo)+'\\an5\\bord0\\1c&H76FAF8&\\pos('+str(X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+str(int(textR[num])/10)+'%\n'
                             eventO += voteResultBg + voteResultext
                         num += 1
-            textR = []
             vote_check = False
 
         if re.search('/vote', text) == None:  # 处理非投票运营弹幕
