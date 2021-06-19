@@ -174,7 +174,7 @@ for chat in chats:
                                 fontSize_anketo)+'\\an5\\bord0\\1c&H76FAF8&\\pos('+str(X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+str(int(textR[i])/10)+'%\n'
 
                             eventO += voteResultBg + voteResultext
-            elif len(textR) >= 4:
+            elif len(textO) >= 4:
                 bgWidth = math.floor(videoWidth/5)
                 bgHeight = math.floor(videoHeight/4)
 
