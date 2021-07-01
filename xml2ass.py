@@ -37,6 +37,8 @@ limitLineAmount = 11  # 屏上弹幕行数限制
 danmakuPassageway = []  # 计算弹幕应该在哪一行出现
 for i in range(limitLineAmount):
     danmakuPassageway.append(0)
+dm_count = 0  # 处理同时出过多弹幕的情况
+vpos_now = 0
 include_aa = False  # 判断是否有AA弹幕
 vote_check = False  # 判断投票是否开启
 
@@ -284,9 +286,13 @@ for chat in chats:
             eventD += 'Dialogue: 1,'+startTime+','+endTime + \
                 ',Danmaku,,0,0,0,,{\\an8'+assColor+'}'+text+'\n'
         elif pos == 0:  # 普通滚动弹幕
+            if vpos > vpos_now:
+                vpos_now = vpos
+                dm_count = 0
             vpos_next_min = float('inf')
             vpos_next = int(vpos+1280/(len(text)*70+1280) *
                             timeDanmaku*100)  # 弹幕不是太密集时，控制同一条通道的弹幕不超过前一行
+            dm_count += 1
             for i in range(limitLineAmount):
                 if vpos_next >= danmakuPassageway[i]:
                     passageway_index = i
@@ -298,6 +304,8 @@ for chat in chats:
                 if i == limitLineAmount-1 and vpos_next < vpos_next_min:
                     passageway_index = Passageway_min
                     danmakuPassageway[Passageway_min] = vpos+timeDanmaku*100
+            if dm_count > 11:
+                passageway_index = dm_count % 11
             # 计算弹幕位置
             sx = videoWidth
             sy = danmakuLineHeight*(passageway_index)
