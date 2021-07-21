@@ -9,7 +9,11 @@ import xmltodict
 xml_name = sys.argv[1]  # 输入文件
 with open(xml_name, 'r', encoding='utf-8') as fx:
     xml_dict = xmltodict.parse(fx.read())
-chats = xml_dict['NiconamaComment']['LiveCommentDataArray']['chat']  # 获取所有弹幕
+
+if 'NiconamaComment' in xml_dict:
+    chats = xml_dict['NiconamaComment']['LiveCommentDataArray']['chat']  # 获取所有弹幕
+else:
+    chats = xml_dict['packet']['chat']
 chats = sorted(chats, key=lambda x: x['@vpos'].zfill(10))  # 按vpos排序
 
 # 获取运营弹幕ID和需要过滤弹幕的ID
