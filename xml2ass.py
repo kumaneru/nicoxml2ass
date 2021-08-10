@@ -75,7 +75,7 @@ for chat in chats:
     mail = chat['@mail'] if '@mail' in chat else ''  # mail,颜色，位置，大小，AA
     premium = chat['@premium'] if '@premium' in chat else ''
     # 过滤弹幕
-    if '※ NGコメント' in text or '/clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text or '/info' in text:
+    if '※ NGコメント' in text or '/clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text or '/info' in text or '/jump' in text or '/play' in text:
         continue
     elif premium == '2':
         continue
@@ -99,22 +99,24 @@ for chat in chats:
             assColor += '\\3c&HFFFFFF&'
     if user_id in officeId:  # 处理运营弹幕
         if re.search('/vote', text) != None and re.search('/vote stop', text) == None:  # 处理投票开始和投票结果
-            if '"' in text:
-                textV = text.split(' ', 2)[0:2]
-                text = text.split(' ', 2)[2]
+            textV = text.split(' ', 2)[0:2]
+            text = text.split(' ', 2)[2]
+            while len(text) != 0:
                 if text[0] == '"':
                     textV += text.replace('"', '', 1).split('"', 1)[0:1]
-                    text = text.replace('"', '', 1).split('"', 1)[1]
-                    text = text[1:]
+                    if len(text.split(' ', 1)) > 1:
+                        text = text.replace('"', '', 1).split('"', 1)[1]
+                        text = text[1:]
+                    else:
+                        text = ""
+                elif text[0] == "per":
+                    continue
                 else:
                     textV += text.split(' ', 1)[0:1]
-                    text = text.split(' ', 1)[1]
-                if text[-1] == '"':
-                    textV += text.replace('" "', '"').split('"')
-                else:
-                    textV += text.split(' ')
-            else:
-                textV = text.split(' ')
+                    if len(text.split(' ', 1)) > 1:
+                        text = text.split(' ', 1)[1]
+                    else:
+                        text = ""
 
             if textV[1] == 'start':
                 startTimeQ = startTime
@@ -374,8 +376,8 @@ Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour,
 Style: Default,微软雅黑,54,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,2,0,0,0,0\n\
 Style: Alternate,微软雅黑,36,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,2,0,0,0,0\n\
 Style: AA,黑体,'+str(AASize)+',&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,0,0,2,0,0,0,0\n\
-Style: Office,'+fontName+','+str(OfficeSize)+',&H0FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,2,0,1,1.5,0,2,0,0,10,0\n\
-Style: Anketo,'+fontName+','+str(fontSize)+',&H0FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,2,0,1,1.5,0,2,0,0,10,0\n\
+Style: Office,'+fontName+','+str(OfficeSize)+',&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,2,0,1,1.5,0,2,0,0,10,0\n\
+Style: Anketo,'+fontName+','+str(fontSize)+',&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,2,0,1,1.5,0,2,0,0,10,0\n\
 Style: Danmaku,'+fontName+','+str(fontSize)+',&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,2,0,1,1.5,0,2,0,0,10,0\n\n\
 [Events]\n\
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n'
