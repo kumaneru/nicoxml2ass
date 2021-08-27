@@ -271,6 +271,7 @@ for chat in chats:
         pos = 0
         size = fontSize
         is_aa = False
+        text = text.replace('\n','\\N')
         for style in mail.split(' '):  # 样式调整
             if style == 'ue':
                 pos = 8
