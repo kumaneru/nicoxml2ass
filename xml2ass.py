@@ -3,16 +3,21 @@ import os
 import re
 import sys
 import math
-import time
 import xmltodict
+
+
+def sec2hms(sec):  # 转换时间的函数
+    hms = str(int(sec//3600)).zfill(2)+':' + \
+        str(int((sec % 3600)//60)).zfill(2)+':'+str(round(sec % 60, 2))
+    return hms
 
 
 def xml2ass(xml_name):
     with open(xml_name, 'r', encoding='utf-8') as fx:
         xml_dict = xmltodict.parse(fx.read())
-
+    # 获取所有弹幕
     if 'NiconamaComment' in xml_dict:
-        chats = xml_dict['NiconamaComment']['LiveCommentDataArray']['chat']  # 获取所有弹幕
+        chats = xml_dict['NiconamaComment']['LiveCommentDataArray']['chat']
     else:
         chats = xml_dict['packet']['chat']
     chats = sorted(chats, key=lambda x: x['@vpos'].zfill(10))  # 按vpos排序
@@ -46,11 +51,10 @@ def xml2ass(xml_name):
     vpos_now = 0
     include_aa = False  # 判断是否有AA弹幕
     vote_check = False  # 判断投票是否开启
-
-    # 颜色列表
-    colorMap = {'black': '000000', 'white': 'FFFFFF', 'red': 'FF0000', 'green': '00ff00', 'yellow': 'FFFF00', 'blue': '0000FF', 'orange': 'ffcc00', 'pink': 'FF8080', 'cyan': '0FFFF', 'purple': 'C000FF', 'niconicowhite': 'cccc99', 'white2': 'cccc99', 'truered': 'cc0033',
-                'red2': 'cc0033', 'passionorange': 'ff6600', 'orange2': 'ff6600', 'madyellow': '999900', 'yellow2': '999900', 'elementalgreen': '00cc66', 'green2': '00cc66', 'marineblue': '33ffcc', 'blue2': '33ffcc', 'nobleviolet': '6633cc', 'purple2': '6633cc'}
-
+    colorMap = {'black': '000000', 'white': 'FFFFFF', 'red': 'FF0000', 'green': '00ff00', 'yellow': 'FFFF00', 'blue': '0000FF', 'orange': 'ffcc00',
+                'pink': 'FF8080', 'cyan': '0FFFF', 'purple': 'C000FF', 'niconicowhite': 'cccc99', 'white2': 'cccc99', 'truered': 'cc0033',
+                'red2': 'cc0033', 'passionorange': 'ff6600', 'orange2': 'ff6600', 'madyellow': '999900', 'yellow2': '999900', 'elementalgreen': '00cc66',
+                'green2': '00cc66', 'marineblue': '33ffcc', 'blue2': '33ffcc', 'nobleviolet': '6633cc', 'purple2': '6633cc'}  # 颜色列表
     videoWidth = 1280  # 视频宽度，默认3M码率生放，不用改
     videoHeight = 720  # 视频高度，默认3M码率生放，不用改
     fontSize = 64  # 普通弹幕字体大小
@@ -62,20 +66,13 @@ def xml2ass(xml_name):
     officeBg = 'm 0 0 l '+str(videoWidth)+' 0 l '+str(videoWidth) + \
         ' '+str(OfficeBgHeight)+' l 0 '+str(OfficeBgHeight)  # 运营弹幕遮盖
 
-
-    def sec2hms(sec):# 转换时间的函数
-        hms = str(int(sec//3600)).zfill(2)+':' + \
-            str(int((sec % 3600)//60)).zfill(2)+':'+str(round(sec % 60, 2))
-        return hms
-
-
     # 处理弹幕
     for chat in chats:
         text = chat['#text']  # 文本
         user_id = chat['@user_id']  # id
         mail = chat['@mail'] if '@mail' in chat else ''  # mail,颜色，位置，大小，AA
         premium = chat['@premium'] if '@premium' in chat else ''
-    # 过滤弹幕
+        # 过滤弹幕
         if '※ NGコメント' in text or '/clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text or '/info' in text or '/jump' in text or '/play' in text:
             continue
         elif premium == '2':
@@ -118,7 +115,6 @@ def xml2ass(xml_name):
                             text = text.split(' ', 1)[1]
                         else:
                             text = ""
-
                 if textV[1] == 'start':
                     startTimeQ = startTime
                     textQ = textV[2]
@@ -192,24 +188,19 @@ def xml2ass(xml_name):
                         videoWidth/2)+40], [math.floor(videoWidth/2)-bgWidth-40, math.floor(videoWidth/2), math.floor(videoWidth/2)+bgWidth+40]]
                     YArray = [[math.floor(videoHeight/2)], [math.floor(videoHeight/3), (math.floor(videoHeight/2)-math.floor(videoHeight/3))+math.floor(
                         videoHeight/2)], [math.floor(videoHeight/2)-bgHeight-20, math.floor(videoHeight/2)+20, math.floor(videoHeight/2)+bgHeight+60]]
-
                     X = XArray[2]
                     Y = YArray[2]
-
                     if len(textO) == 4:
                         bgWidth = math.floor(videoWidth/4)
                         bgHeight = math.floor(videoHeight/4)
                         X = XArray[1]
                         Y = YArray[1]
-
                     elif len(textO) >= 5 and len(textO) <= 6:
                         bgHeight = math.floor(videoHeight/4)
                         Y = YArray[1]
-
                     elif len(textO) == 8:
                         X = [160, 480, 800, 1120]
                         Y = YArray[1]
-
                     elif len(textO) > 6:
                         bgHeight = math.floor(videoHeight/4.5)
                         Y = YArray[2]
@@ -272,7 +263,7 @@ def xml2ass(xml_name):
             pos = 0
             size = fontSize
             is_aa = False
-            text = text.replace('\n','\\N')
+            text = text.replace('\n', '\\N')
             for style in mail.split(' '):  # 样式调整
                 if style == 'ue':
                     pos = 8
@@ -311,7 +302,8 @@ def xml2ass(xml_name):
                         Passageway_min = i
                     if i == limitLineAmount-1 and vpos_next < vpos_next_min:
                         passageway_index = Passageway_min
-                        danmakuPassageway[Passageway_min] = vpos+timeDanmaku*100
+                        danmakuPassageway[Passageway_min] = vpos + \
+                            timeDanmaku*100
                 if dm_count > 11:
                     passageway_index = dm_count % 11
                 # 计算弹幕位置
@@ -391,8 +383,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\
         f.write(eventO)
         f.write(eventD)
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     if len(sys.argv) > 1:
-        for i in  range(len(sys.argv)-1):
-            xml_name = sys.argv[i+1]  # 输入文件
+        for i in range(len(sys.argv)-1):  # 输入文件
+            xml_name = sys.argv[i+1]
             xml2ass(xml_name)
