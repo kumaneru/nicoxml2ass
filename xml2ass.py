@@ -38,7 +38,7 @@ def xml2ass(xml_name):
     AAHighAdjust = 0  # AA弹幕行间间隔
     OfficeSize = 40  # 运营弹幕字体大小
     OfficeBgHeight = 72  # 运营弹幕背景遮盖高度
-    fontName = 'Source Han Sans JP'
+    fontName = 'SourceHanSansJP-Bold'
     danmakuSize = 68
     danmakuLineHeight = 64  # 弹幕行高度
     danmakuFontSpace = 2  # 弹幕行间间隔
