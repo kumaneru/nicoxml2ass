@@ -11,4 +11,4 @@ python xml2ass.py xxx.xml
 
 ## Acknowledgement
  [NicoDanmaku2ASS@fireattack](https://github.com/fireattack/nicodanmaku2ass)  
- xml2ass@[夜夜魅力的](https://space.bilibili.com/22178630)
+ [nico-danmaku2ass@夜夜魅力的](https://helloakira.github.io/nico-danmaku2ass/)
