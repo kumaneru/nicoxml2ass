@@ -25,10 +25,15 @@ def xml2ass(xml_name):
     # 获取运营弹幕ID和需要过滤弹幕的ID
     officeId = []
     for i in range(len(chats)):
-        text = chats[i]['#text']
+        try:
+            text = chats[i]['#text']
+        except:
+            print(i)
         user_id = chats[i]['@user_id']
         premium = chats[i]['@premium'] if '@premium' in chats[i] else ''
         if premium == '3':
+            officeId.append(user_id)
+        elif user_id == "-1":
             officeId.append(user_id)
         if i == len(chats) - 1 and len(officeId) == 0:
             officeId.append(input('找不到运营id，请手动输入：'))
@@ -73,7 +78,7 @@ def xml2ass(xml_name):
         mail = chat['@mail'] if '@mail' in chat else ''  # mail,颜色，位置，大小，AA
         premium = chat['@premium'] if '@premium' in chat else ''
         # 过滤弹幕
-        if '※ NGコメント' in text or '/clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text or '/info' in text or '/jump' in text or '/play' in text:
+        if '※ NGコメント' in text or '/clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text or '/info' in text or '/jump' in text or '/play' in text or '/redirect' in text:
             continue
         elif premium == '2':
             continue
@@ -279,10 +284,10 @@ def xml2ass(xml_name):
             if is_aa:  # AA弹幕跳过，在后一部分处理
                 continue
             elif pos == 2:  # 底部弹幕
-                eventD += 'Dialogue: 1,'+startTime+','+endTime + \
+                eventD += 'Dialogue: 2,'+startTime+','+endTime + \
                     ',Danmaku,,0,0,0,,{\\an2'+assColor+'}'+text+'\n'
             elif pos == 8:  # 顶部弹幕
-                eventD += 'Dialogue: 1,'+startTime+','+endTime + \
+                eventD += 'Dialogue: 2,'+startTime+','+endTime + \
                     ',Danmaku,,0,0,0,,{\\an8'+assColor+'}'+text+'\n'
             elif pos == 0:  # 普通滚动弹幕
                 if vpos > vpos_now:
@@ -313,11 +318,11 @@ def xml2ass(xml_name):
                 ey = danmakuLineHeight*(passageway_index)
                 # 生成弹幕行并加入总弹幕
                 if premium == '24' or premium == '25':
-                    eventD += 'Dialogue: 1,'+startTime+','+endTime + \
+                    eventD += 'Dialogue: 2,'+startTime+','+endTime + \
                         ',Danmaku,,0,0,0,,{\\an7\\alpha80\\move('+str(sx)+','+str(
                             sy)+','+str(ex)+','+str(ey)+')'+assColor+'}'+text+'\n'
                 else:
-                    eventD += 'Dialogue: 1,'+startTime+','+endTime + \
+                    eventD += 'Dialogue: 2,'+startTime+','+endTime + \
                         ',Danmaku,,0,0,0,,{\\an7\\move('+str(sx)+','+str(
                             sy)+','+str(ex)+','+str(ey)+')'+assColor+'}'+text+'\n'
 
@@ -354,7 +359,7 @@ def xml2ass(xml_name):
                 # 分成多行生成弹幕并整合成完整AA弹幕
                 textAA = text.split('\n')
                 for a in range(len(textAA)):
-                    eventA += 'Dialogue: 4,'+startTime+','+endTime+',AA,,0,0,0,,{\\an4\\fsp-1\\move('+str(videoWidth)+', '+str(
+                    eventA += 'Dialogue: 1,'+startTime+','+endTime+',AA,,0,0,0,,{\\an4\\fsp-1\\move('+str(videoWidth)+', '+str(
                         (AASize-1)*a+AAHighAdjust)+','+str(-fontSize*10)+',' + str((AASize-1)*a+AAHighAdjust)+')'+assColor+'}'+textAA[a]+'\n'
 
     # 定义ass文件头
