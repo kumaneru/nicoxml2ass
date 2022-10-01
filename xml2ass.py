@@ -31,7 +31,7 @@ def xml2ass(xml_name):
             print(i)
         user_id = chats[i]['@user_id']
         premium = chats[i]['@premium'] if '@premium' in chats[i] else ''
-        if premium == '3':
+        if premium == '3' or premium == '7' :
             officeId.append(user_id)
         elif user_id == "-1":
             officeId.append(user_id)
