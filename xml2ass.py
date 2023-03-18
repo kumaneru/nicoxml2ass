@@ -31,7 +31,7 @@ def xml2ass(xml_name):
             print(i)
         user_id = chats[i]['@user_id']
         premium = chats[i]['@premium'] if '@premium' in chats[i] else ''
-        if premium == '3' or premium == '7' :
+        if premium == '3' or premium == '7':
             officeId.append(user_id)
         elif user_id == "-1":
             officeId.append(user_id)
@@ -63,6 +63,7 @@ def xml2ass(xml_name):
     videoWidth = 1280  # 视频宽度，默认3M码率生放，不用改
     videoHeight = 720  # 视频高度，默认3M码率生放，不用改
     fontSize = 64  # 普通弹幕字体大小
+    officialCheck = False
 
     # 字幕行处理
     eventA = 'Comment: 0,0:00:00.00,0:00:00.00,AA,,0,0,0,,AA弹幕\n'  # AA弹幕
@@ -89,6 +90,7 @@ def xml2ass(xml_name):
         endTime = sec2hms(round(vpos/100, 2)+timeDanmaku)  # 转换结束时间
         color = 'ffffff'
         color_important = 0
+
         for style in mail.split(' '):  # 颜色调整
             if re.match(r'#([0-9A-Fa-f]{6})', style):
                 m = re.match(r'#([0-9A-Fa-f]{6})', style)
@@ -100,6 +102,24 @@ def xml2ass(xml_name):
             assColor = '\\1c&H'+color[-2:]+color[2:-2]+color[:2]+'&'
             if color == '000000':
                 assColor += '\\3c&HFFFFFF&'
+        if officialCheck:
+            if vpos-vposW > 800 or user_id in officeId:
+                if user_id in officeId:
+                    endTimeW = startTime
+                eventBg = 'Dialogue: 4,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
+                    videoWidth/2)+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
+                if 'a href' in text:
+                    link = re.compile('<a href=(.*?)><u>')
+                    textW = link.sub('', textW).replace('</u></a>', '')
+                    eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(videoWidth/2)+','+str(
+                        math.floor(OfficeBgHeight/2))+')\\bord0\\1c&HFF8000&\\u1\\fsp0}'+textW.replace('/perm ', '')+'\n'
+                else:
+                    eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(videoWidth/2)+','+str(
+                        math.floor(OfficeBgHeight/2))+')\\bord0'+assColor+'\\fsp0}'+textW.replace('/perm ', '')+'\n'
+                if len(text) > 50:
+                    eventDm = eventDm.replace('fsp0', 'fsp0\\fs30')
+                eventO += eventBg+eventDm.replace('　', '  ')
+                officialCheck = False
         if user_id in officeId:  # 处理运营弹幕
             if re.search('/vote', text) != None and re.search('/vote stop', text) == None:  # 处理投票开始和投票结果
                 textV = text.split(' ', 2)[0:2]
@@ -250,19 +270,11 @@ def xml2ass(xml_name):
                 vote_check = False
 
             if re.search('/vote', text) == None:  # 处理非投票运营弹幕
-                eventBg = 'Dialogue: 4,'+startTime+','+endTime+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
-                    videoWidth/2)+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
-                if 'a href' in text:
-                    link = re.compile('<a href=(.*?)><u>')
-                    text = link.sub('', text).replace('</u></a>', '')
-                    eventDm = 'Dialogue: 5,'+startTime+','+endTime+',Office,,0,0,0,,{\\an5\\pos('+str(videoWidth/2)+','+str(
-                        math.floor(OfficeBgHeight/2))+')\\bord0\\1c&HFF8000&\\u1\\fsp0}'+text.replace('/perm ', '')+'\n'
-                else:
-                    eventDm = 'Dialogue: 5,'+startTime+','+endTime+',Office,,0,0,0,,{\\an5\\pos('+str(videoWidth/2)+','+str(
-                        math.floor(OfficeBgHeight/2))+')\\bord0'+assColor+'\\fsp0}'+text.replace('/perm ', '')+'\n'
-                if len(text) > 50:
-                    eventDm = eventDm.replace('fsp0', 'fsp0\\fs30')
-                eventO += eventBg+eventDm.replace('　', '  ')
+                startTimeW = startTime
+                endTimeW = endTime
+                textW = text
+                vposW = vpos
+                officialCheck = True
 
         else:  # 处理用户弹幕
             pos = 0
@@ -384,9 +396,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\
     # 写入ass
     with open(os.path.splitext(xml_name)[0]+'.ass', 'w', encoding='utf-8-sig') as f:
         f.write(header)
-        f.write(eventA)
         f.write(eventO)
         f.write(eventD)
+        f.write(eventA)
 
 
 if __name__ == "__main__":
