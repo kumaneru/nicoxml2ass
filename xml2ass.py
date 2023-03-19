@@ -78,6 +78,29 @@ def xml2ass(xml_name):
         user_id = chat['@user_id']  # id
         mail = chat['@mail'] if '@mail' in chat else ''  # mail,颜色，位置，大小，AA
         premium = chat['@premium'] if '@premium' in chat else ''
+        vpos = int(chat['@vpos'])  # 读取时间
+        startTime = sec2hms(round(vpos/100, 2))  # 转换开始时间
+        endTime = sec2hms(round(vpos/100, 2)+timeDanmaku)  # 转换结束时间
+        color = 'ffffff'
+        color_important = 0
+        if officialCheck:  # 释放之前捕捉的运营弹幕
+            if vpos-vposW > 800 or user_id in officeId:
+                if user_id in officeId:
+                    endTimeW = startTime
+                eventBg = 'Dialogue: 4,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
+                    videoWidth/2)+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
+                if 'href' in textW:
+                    link = re.compile('<a href=(.*?)><u>')
+                    textW = link.sub('', textW).replace('</u></a>', '')
+                    eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(videoWidth/2)+','+str(
+                        math.floor(OfficeBgHeight/2))+')\\bord0\\1c&HFF8000&\\u1\\fsp0}'+textW.replace('/perm ', '')+'\n'
+                else:
+                    eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(videoWidth/2)+','+str(
+                        math.floor(OfficeBgHeight/2))+')\\bord0'+assColor+'\\fsp0}'+textW.replace('/perm ', '')+'\n'
+                if len(text) > 50:
+                    eventDm = eventDm.replace('fsp0', 'fsp0\\fs30')
+                eventO += eventBg+eventDm.replace('　', '  ')
+                officialCheck = False
         # 过滤弹幕
         if '※ NGコメント' in text or '/clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text or '/info' in text or '/jump' in text or '/play' in text or '/redirect' in text:
             continue
@@ -85,11 +108,6 @@ def xml2ass(xml_name):
             continue
         elif chat['@vpos'] == '':
             continue
-        vpos = int(chat['@vpos'])  # 读取时间
-        startTime = sec2hms(round(vpos/100, 2))  # 转换开始时间
-        endTime = sec2hms(round(vpos/100, 2)+timeDanmaku)  # 转换结束时间
-        color = 'ffffff'
-        color_important = 0
 
         for style in mail.split(' '):  # 颜色调整
             if re.match(r'#([0-9A-Fa-f]{6})', style):
@@ -102,24 +120,6 @@ def xml2ass(xml_name):
             assColor = '\\1c&H'+color[-2:]+color[2:-2]+color[:2]+'&'
             if color == '000000':
                 assColor += '\\3c&HFFFFFF&'
-        if officialCheck:
-            if vpos-vposW > 800 or user_id in officeId:
-                if user_id in officeId:
-                    endTimeW = startTime
-                eventBg = 'Dialogue: 4,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
-                    videoWidth/2)+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
-                if 'a href' in text:
-                    link = re.compile('<a href=(.*?)><u>')
-                    textW = link.sub('', textW).replace('</u></a>', '')
-                    eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(videoWidth/2)+','+str(
-                        math.floor(OfficeBgHeight/2))+')\\bord0\\1c&HFF8000&\\u1\\fsp0}'+textW.replace('/perm ', '')+'\n'
-                else:
-                    eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(videoWidth/2)+','+str(
-                        math.floor(OfficeBgHeight/2))+')\\bord0'+assColor+'\\fsp0}'+textW.replace('/perm ', '')+'\n'
-                if len(text) > 50:
-                    eventDm = eventDm.replace('fsp0', 'fsp0\\fs30')
-                eventO += eventBg+eventDm.replace('　', '  ')
-                officialCheck = False
         if user_id in officeId:  # 处理运营弹幕
             if re.search('/vote', text) != None and re.search('/vote stop', text) == None:  # 处理投票开始和投票结果
                 textV = text.split(' ', 2)[0:2]
