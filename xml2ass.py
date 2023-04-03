@@ -83,6 +83,13 @@ def xml2ass(xml_name):
         endTime = sec2hms(round(vpos/100, 2)+timeDanmaku)  # 转换结束时间
         color = 'ffffff'
         color_important = 0
+        # 过滤弹幕
+        if '※ NGコメント' in text or '/clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text or '/info' in text or '/jump' in text or '/play' in text or '/redirect' in text:
+            continue
+        elif premium == '2':
+            continue
+        elif chat['@vpos'] == '':
+            continue
         if officialCheck:  # 释放之前捕捉的运营弹幕
             if vpos-vposW > 800 or user_id in officeId:
                 if user_id in officeId:
@@ -101,13 +108,6 @@ def xml2ass(xml_name):
                     eventDm = eventDm.replace('fsp0', 'fsp0\\fs30')
                 eventO += eventBg+eventDm.replace('　', '  ')
                 officialCheck = False
-        # 过滤弹幕
-        if '※ NGコメント' in text or '/clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text or '/info' in text or '/jump' in text or '/play' in text or '/redirect' in text:
-            continue
-        elif premium == '2':
-            continue
-        elif chat['@vpos'] == '':
-            continue
 
         for style in mail.split(' '):  # 颜色调整
             if re.match(r'#([0-9A-Fa-f]{6})', style):
