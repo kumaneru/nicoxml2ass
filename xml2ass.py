@@ -28,7 +28,8 @@ def xml2ass(xml_name):
         try:
             text = chats[i]['#text']
         except:
-            print(i)
+            chats = chats[:i]+chats[i+1:]
+            continue
         user_id = chats[i]['@user_id']
         premium = chats[i]['@premium'] if '@premium' in chats[i] else ''
         if premium == '3' or premium == '7':
