@@ -24,12 +24,15 @@ def xml2ass(xml_name):
 
     # 获取运营弹幕ID和需要过滤弹幕的ID
     officeId = []
+    badItem = []
     for i in range(len(chats)):
         try:
             text = chats[i]['#text']
-        except:
-            chats = chats[:i]+chats[i+1:]
+        except KeyError:
+            badItem.append(i)
             continue
+        except:
+            print(i)
         user_id = chats[i]['@user_id']
         premium = chats[i]['@premium'] if '@premium' in chats[i] else ''
         if premium == '3' or premium == '7':
@@ -38,6 +41,9 @@ def xml2ass(xml_name):
             officeId.append(user_id)
         if i == len(chats) - 1 and len(officeId) == 0:
             officeId.append(input('找不到运营id，请手动输入：'))
+
+    for i in badItem[:: -1]:
+        chats.pop(i)
 
     # 弹幕参数
     AASize = 18  # AA弹幕字体大小
