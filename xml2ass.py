@@ -131,12 +131,12 @@ def xml2ass(xml_name):
             if re.search('/vote', text) != None and re.search('/vote stop', text) == None:  # 处理投票开始和投票结果
                 textV = text.split(' ', 2)[0:2]
                 text = text.split(' ', 2)[2]
+                subText = text
                 while len(text) != 0:
                     if text[0] == '"':
-                        textV += text.replace('"', '', 1).split('"', 1)[0:1]
+                        textV += text.replace(' "', '', 1).split('" ', 1)[0:1]
                         if len(text.split(' ', 1)) > 1:
-                            text = text.replace('"', '', 1).split('"', 1)[1]
-                            text = text[1:]
+                            text = text.replace('"', '', 1).split('" ', 1)[1]
                         else:
                             text = ""
                     elif text[0] == "per":
@@ -148,6 +148,11 @@ def xml2ass(xml_name):
                         else:
                             text = ""
                 if textV[1] == 'start':
+                    if '\\' in subText:
+                        textV = [textV[i].replace('\\', '')
+                                 for i in range(len(textV))]
+                        textV = [textV[i].replace(
+                            '"', '', 1) if textV[i][0] == '"' else textV[i] for i in range(len(textV))]
                     startTimeQ = startTime
                     textQ = textV[2]
                     textO = textV[3:]
