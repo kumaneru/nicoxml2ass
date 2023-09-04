@@ -4,6 +4,7 @@ import re
 import sys
 import math
 import xmltodict
+import json
 
 
 def sec2hms(sec):  # 转换时间的函数
@@ -14,36 +15,46 @@ def sec2hms(sec):  # 转换时间的函数
 
 def xml2ass(xml_name):
     with open(xml_name, 'r', encoding='utf-8') as fx:
-        xml_dict = xmltodict.parse(fx.read())
-    # 获取所有弹幕
-    if 'NiconamaComment' in xml_dict:
-        chats = xml_dict['NiconamaComment']['LiveCommentDataArray']['chat']
-    else:
-        chats = xml_dict['packet']['chat']
-    chats = sorted(chats, key=lambda x: x['@vpos'].zfill(10))  # 按vpos排序
+        if xml_name.lower().endswith('.xml'):
+            xml_dict = xmltodict.parse(fx.read(), strip_whitespace=False)
+            # 获取所有弹幕
+            if 'NiconamaComment' in xml_dict:
+                chats = xml_dict['NiconamaComment']['LiveCommentDataArray']['chat']
+            else:
+                chats = xml_dict['packet']['chat']
+            chats = [{key.lstrip('@#'): v for key, v in d.items()} for d in chats]
+
+        elif xml_name.lower().endswith('.json'):
+            json_dict = json.load(fx)
+            chats = []
+            for d in json_dict:
+                if 'chat' in d:
+                    d = d['chat']
+                if not 'vpos' in d:
+                    continue
+                if 'content' in d:
+                    d['text'] = d.pop('content')
+                chats.append(d)
+
+    chats.sort(key=lambda x: int(x.get('vpos') or 0))  # 按 vpos 排序
 
     # 获取运营弹幕ID和需要过滤弹幕的ID
     officeId = []
-    badItem = []
-    for i in range(len(chats)):
-        try:
-            text = chats[i]['#text']
-        except KeyError:
-            badItem.append(i)
+    chats_filtered = []
+    for chat in chats:
+        if not chat.get('text', None):
             continue
-        except:
-            print(i)
-        user_id = chats[i]['@user_id']
-        premium = chats[i]['@premium'] if '@premium' in chats[i] else ''
-        if premium == '3' or premium == '7':
+        user_id = chat['user_id']
+        premium = str(chat.get('premium', ''))
+        if premium in ['3', '7']:
             officeId.append(user_id)
-        elif user_id == "-1":
+        elif str(user_id) == '-1':
             officeId.append(user_id)
-        if i == len(chats) - 1 and len(officeId) == 0:
-            officeId.append(input('找不到运营id，请手动输入：'))
+        chats_filtered.append(chat)
 
-    for i in badItem[:: -1]:
-        chats.pop(i)
+    if len(officeId) == 0:
+        officeId.append(input('找不到运营id，请手动输入：'))
+    chats = chats_filtered
 
     # 弹幕参数
     AASize = 18  # AA弹幕字体大小
@@ -81,22 +92,29 @@ def xml2ass(xml_name):
 
     # 处理弹幕
     for chat in chats:
-        text = chat['#text']  # 文本
-        user_id = chat['@user_id']  # id
-        mail = chat['@mail'] if '@mail' in chat else ''  # mail,颜色，位置，大小，AA
-        premium = chat['@premium'] if '@premium' in chat else ''
-        vpos = int(chat['@vpos'])  # 读取时间
+        text = chat['text']  # 文本
+        user_id = chat['user_id']  # id
+        mail = chat.get('mail', '')  # mail,颜色，位置，大小，AA
+        premium = str(chat.get('premium', ''))
+        if not chat.get('vpos'):
+            continue
+        vpos = int(chat['vpos'])  # 读取时间
         startTime = sec2hms(round(vpos/100, 2))  # 转换开始时间
         endTime = sec2hms(round(vpos/100, 2)+timeDanmaku)  # 转换结束时间
         color = 'ffffff'
         color_important = 0
+
         # 过滤弹幕
-        if '※ NGコメント' in text or '/clear' in text or '/trialpanel' in text or '/spi' in text or '/disconnect' in text or '/gift' in text or '/commentlock' in text or '/nicoad' in text or '/info' in text or '/jump' in text or '/play' in text or '/redirect' in text:
+        has_ngword = False
+        for ngword in ['※ NGコメント', '/clear' '/trialpanel',  '/spi', '/disconnect', '/gift', '/commentlock', '/nicoad', '/info', '/jump', '/play', '/redirect']:
+            if ngword in text:
+                has_ngword = True
+                break
+        if has_ngword:
             continue
-        elif premium == '2':
+        if premium == '2':
             continue
-        elif chat['@vpos'] == '':
-            continue
+
         if officialCheck:  # 释放之前捕捉的运营弹幕
             if vpos-vposW > 800 or user_id in officeId:
                 if user_id in officeId:
@@ -302,7 +320,7 @@ def xml2ass(xml_name):
                     size = int(fontSize * 1.44)
                 elif style == 'small':
                     size = int(fontSize * 0.64)
-                elif style == 'gothic' or style == 'mincho':  # 判断AA弹幕
+                elif style in ['gothic', 'mincho']:  # 判断AA弹幕
                     is_aa = True
                     include_aa = True
             if is_aa:  # AA弹幕跳过，在后一部分处理
@@ -351,21 +369,18 @@ def xml2ass(xml_name):
                             sy)+','+str(ex)+','+str(ey)+')'+assColor+'}'+text+'\n'
 
     if include_aa:  # 处理AA弹幕
-        import xml.dom.minidom
-        DOMTree = xml.dom.minidom.parse(xml_name)
-        collection = DOMTree.documentElement
-        chats = collection.getElementsByTagName('chat')
-        for i in range(len(chats)):
-            mail = chats[i].getAttribute('mail')
-            if mail[-6:] == 'mincho' or mail[-6:] == 'gothic':  # 判断AA弹幕行进行处理
-                text = chats[i].childNodes[0].data
-                vpos = int(chats[i].getAttribute('vpos'))
+        for chat in chats:
+            mail = chat.get('mail', '')
+            sytles = mail.split(' ')
+            if 'mincho' in sytles or 'gothic' in sytles:  # 判断AA弹幕行进行处理
+                text = chat['text']
+                vpos = int(chat['vpos'])
                 startTime = sec2hms(round(vpos/100, 2))
                 endTime = sec2hms(round(vpos/100, 2)+timeDanmaku)
                 color = 'ffffff'
                 size = fontSize
                 color_important = 0
-                for style in mail.split(' '):
+                for style in sytles:
                     if style == 'big':
                         size = int(fontSize * 1.44)
                     elif style == 'small':
