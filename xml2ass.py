@@ -22,7 +22,8 @@ def xml2ass(xml_name):
                 chats = xml_dict['NiconamaComment']['LiveCommentDataArray']['chat']
             else:
                 chats = xml_dict['packet']['chat']
-            chats = [{key.lstrip('@#'): v for key, v in d.items()} for d in chats]
+            chats = [{key.lstrip('@#'): v for key, v in d.items()}
+                     for d in chats]
 
         elif xml_name.lower().endswith('.json'):
             json_dict = json.load(fx)
@@ -308,7 +309,6 @@ def xml2ass(xml_name):
 
         else:  # 处理用户弹幕
             pos = 0
-            size = fontSize
             is_aa = False
             text = text.replace('\n', '\\N')
             for style in mail.split(' '):  # 样式调整
@@ -316,10 +316,6 @@ def xml2ass(xml_name):
                     pos = 8
                 elif style == 'shita':
                     pos = 2
-                elif style == 'big':
-                    size = int(fontSize * 1.44)
-                elif style == 'small':
-                    size = int(fontSize * 0.64)
                 elif style in ['gothic', 'mincho']:  # 判断AA弹幕
                     is_aa = True
                     include_aa = True
@@ -378,14 +374,9 @@ def xml2ass(xml_name):
                 startTime = sec2hms(round(vpos/100, 2))
                 endTime = sec2hms(round(vpos/100, 2)+timeDanmaku)
                 color = 'ffffff'
-                size = fontSize
                 color_important = 0
                 for style in sytles:
-                    if style == 'big':
-                        size = int(fontSize * 1.44)
-                    elif style == 'small':
-                        size = int(fontSize * 0.64)
-                    elif re.match(r'#([0-9A-Fa-f]{6})', style):
+                    if re.match(r'#([0-9A-Fa-f]{6})', style):
                         m = re.match(r'#([0-9A-Fa-f]{6})', style)
                         color_important = str(m[1])
                     elif style in colorMap:
