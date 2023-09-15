@@ -107,7 +107,7 @@ def xml2ass(xml_name):
 
         # 过滤弹幕
         has_ngword = False
-        for ngword in ['※ NGコメント', '/clear' '/trialpanel',  '/spi', '/disconnect', '/gift', '/commentlock', '/nicoad', '/info', '/jump', '/play', '/redirect']:
+        for ngword in ['※ NGコメント', '/clear', '/trialpanel',  '/spi', '/disconnect', '/gift', '/commentlock', '/nicoad', '/info', '/jump', '/play', '/redirect']:
             if ngword in text:
                 has_ngword = True
                 break
