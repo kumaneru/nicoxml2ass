@@ -76,7 +76,7 @@ def xml2ass(xml_name):
     include_aa = False  # 判断是否有AA弹幕
     vote_check = False  # 判断投票是否开启
     colorMap = {'black': '000000', 'white': 'FFFFFF', 'red': 'FF0000', 'green': '00ff00', 'yellow': 'FFFF00', 'blue': '0000FF', 'orange': 'ffcc00',
-                'pink': 'FF8080', 'cyan': '0FFFF', 'purple': 'C000FF', 'niconicowhite': 'cccc99', 'white2': 'cccc99', 'truered': 'cc0033',
+                'pink': 'FF8080', 'cyan': '00FFFF', 'purple': 'C000FF', 'niconicowhite': 'cccc99', 'white2': 'cccc99', 'truered': 'cc0033',
                 'red2': 'cc0033', 'passionorange': 'ff6600', 'orange2': 'ff6600', 'madyellow': '999900', 'yellow2': '999900', 'elementalgreen': '00cc66',
                 'green2': '00cc66', 'marineblue': '33ffcc', 'blue2': '33ffcc', 'nobleviolet': '6633cc', 'purple2': '6633cc'}  # 颜色列表
     videoWidth = 1280  # 视频宽度，默认3M码率生放，不用改
