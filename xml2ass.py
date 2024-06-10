@@ -169,7 +169,7 @@ def xml2ass(xml_name):
                 eventQText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\pos('+str(math.floor(videoWidth/2))+','+str(
                     math.floor(OfficeBgHeight/2))+')\\1c&HFF8000&\\bord0\\fsp0}Q.{\\1c&HFFFFFF&}'+textQ.replace('<br>', '\\N')+'\n'
                 eventQmask = 'Dialogue: 3,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\bord0\\1c&H000000&\\pos('+str(math.floor(videoWidth/2))+','+str(
-                    videoHeight/2)+')\\1a&HC8&}'+'m 0 0 l '+str(videoWidth+20)+' 0 l '+str(videoWidth+20)+' '+str(videoHeight+20)+' l 0 '+str(videoHeight+20)+'\n'
+                    math.floor(videoHeight/2))+')\\1a&HC8&}'+'m 0 0 l '+str(videoWidth+20)+' 0 l '+str(videoWidth+20)+' '+str(videoHeight+20)+' l 0 '+str(videoHeight+20)+'\n'
                 if len(textQ) > 50:
                     eventQText = eventQText.replace('fsp0', 'fsp0\\fs30')
                 eventO += eventQBg + eventQText + eventQmask
