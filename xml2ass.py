@@ -370,7 +370,7 @@ def xml2ass(xml_name):
                 # 分成多行生成弹幕并整合成完整AA弹幕
                 textAA = text.split('\n')
                 for a in range(len(textAA)):
-                    eventA += 'Dialogue: 1,'+startTime+','+endTime+',AA,,0,0,0,,{\\an4\\fsp-1\\move('+str(videoWidth)+', '+str(
+                    eventA += 'Dialogue: 1,'+startTime+','+endTime+',AA,,0,0,0,,{\\an4\\fsp-1\\move('+str(videoWidth)+','+str(
                         (AASize-1)*a+AAHighAdjust)+','+str(-fontSize*10)+',' + str((AASize-1)*a+AAHighAdjust)+')'+assColor+'}'+textAA[a]+'\n'
 
     # 定义ass文件头
