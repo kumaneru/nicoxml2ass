@@ -9,7 +9,7 @@ import shlex
 
 def sec2hms(sec):  # 转换时间的函数
     hms = str(int(sec//3600)).zfill(2)+':' + \
-        str(int((sec % 3600)//60)).zfill(2)+':'+str(round(sec % 60, 2))
+        str(int((sec % 3600)//60)).zfill(2)+':'+str(sec % 60)
     return hms
 
 
@@ -37,25 +37,11 @@ def xml2ass(xml_name):
                     d['text'] = d.pop('content')
                 chats.append(d)
 
-    chats.sort(key=lambda x: int(x.get('vpos') or 0))  # 按 vpos 排序
+    chats.sort(key=lambda x: int(x.get('date') or 0))  # 按 vpos 排序
 
-    # 获取运营弹幕ID和需要过滤弹幕的ID
-    officeId = []
-    chats_filtered = []
-    for chat in chats:
-        if not chat.get('text', None):
-            continue
-        user_id = chat['user_id']
-        premium = str(chat.get('premium', ''))
-        if premium in ['3', '7']:
-            officeId.append(user_id)
-        elif str(user_id) == '-1':
-            officeId.append(user_id)
-        chats_filtered.append(chat)
-
-    if len(officeId) == 0:
-        officeId.append(input('找不到运营id，请手动输入：'))
-    chats = chats_filtered
+    for chat in chats: # 初始化开始时间
+        if chat['vpos'] != '0':
+            dateStart = int(chat['date']) - int(chat['vpos'])/100
 
     # 弹幕参数
     AASize = 18  # AA弹幕字体大小
@@ -74,7 +60,7 @@ def xml2ass(xml_name):
     dm_count = 0  # 处理同时出过多弹幕的情况
     vpos_now = 0
     include_aa = False  # 判断是否有AA弹幕
-    vote_check = False  # 判断投票是否开启
+    voteCheck = False  # 判断投票是否开启
     colorMap = {'black': '000000', 'white': 'FFFFFF', 'red': 'FF0000', 'green': '00ff00', 'yellow': 'FFFF00', 'blue': '0000FF', 'orange': 'ffcc00',
                 'pink': 'FF8080', 'cyan': '00FFFF', 'purple': 'C000FF', 'niconicowhite': 'cccc99', 'white2': 'cccc99', 'truered': 'cc0033',
                 'red2': 'cc0033', 'passionorange': 'ff6600', 'orange2': 'ff6600', 'madyellow': '999900', 'yellow2': '999900', 'elementalgreen': '00cc66',
@@ -93,21 +79,30 @@ def xml2ass(xml_name):
 
     # 处理弹幕
     for chat in chats:
-        text = chat['text']  # 文本
-        user_id = chat['user_id']  # id
-        mail = chat.get('mail', '')  # mail,颜色，位置，大小，AA
-        premium = str(chat.get('premium', ''))
-        if not chat.get('vpos'):
+        if 'date' not in chat.keys():
             continue
-        vpos = int(chat['vpos'])  # 读取时间
-        startTime = sec2hms(round(vpos/100, 2))  # 转换开始时间
-        endTime = sec2hms(round(vpos/100, 2)+timeDanmaku)  # 转换结束时间
+        premium = str(chat.get('premium', ''))
+        if chat.get('user_id'):
+            user_id = chat['user_id']
+        isOfficial = True if premium=='3' or user_id == '-1'  else False
+        if chat.get('text'):
+            text = chat['text'] 
+        elif isOfficial and voteCheck:
+            text = '/vote stop'
+        else:
+            continue  # 文本
+        mail = chat.get('mail', '')  # mail,颜色，位置，大小，AA
+        #if not chat.get('date'):
+            #continue
+        vpos = int(chat['date'])-dateStart  # 读取时间
+        startTime = sec2hms(vpos)  # 转换开始时间
+        endTime = sec2hms(vpos+timeDanmaku) if not isOfficial else sec2hms(vpos+14)  # 转换结束时间
         color = 'ffffff'
         color_important = 0
 
         # 过滤弹幕
         has_ngword = False
-        for ngword in ['※ NGコメント', '/clear', '/trialpanel',  '/spi', '/disconnect', '/gift', '/commentlock', '/nicoad', '/info', '/jump', '/play', '/redirect']:
+        for ngword in ['※ NGコメント', 'Display Forbidden', 'Hidden Restricted',  '30分延長しました', 'Ended', '/redirect', 'Display Restricted']:
             if ngword in text:
                 has_ngword = True
                 break
@@ -117,14 +112,14 @@ def xml2ass(xml_name):
             continue
 
         if officialCheck:  # 释放之前捕捉的运营弹幕
-            if vpos-vposW > 800 or user_id in officeId:
-                if user_id in officeId:
+            if vpos-vposW > 14 or isOfficial:
+                if isOfficial:
                     endTimeW = startTime
                 eventBg = 'Dialogue: 4,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
                     math.floor(videoWidth/2))+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
-                if 'href' in textW:
-                    link = re.compile('<a href=(.*?)><u>')
-                    textW = link.sub('', textW).replace('</u></a>', '')
+                if 'http' in textW:
+                    link = re.compile('\(http(.+?)\)')
+                    textW = link.sub('', textW)
                     eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(math.floor(videoWidth/2))+','+str(
                         math.floor(OfficeBgHeight/2))+')\\bord0\\1c&HFF8000&\\u1\\fsp0}'+textW.replace('/perm ', '')+'\n'
                 else:
@@ -146,8 +141,7 @@ def xml2ass(xml_name):
             assColor = '\\1c&H'+color[-2:]+color[2:-2]+color[:2]+'&'
             if color == '000000':
                 assColor += '\\3c&HFFFFFF&'
-        if user_id in officeId:  # 处理运营弹幕
-
+        if isOfficial:  # 处理运营弹幕
             if re.search(r'^/vote(?! stop)', text):  # 处理投票开始和投票结果
                 split_text = shlex.split(text)
                 split_text = [t.replace('\\', '') for t in split_text]
@@ -156,14 +150,14 @@ def xml2ass(xml_name):
                     textQ = split_text[2]
                     textO = split_text[3:]
                     textR = []
-                    vote_check = True
+                    voteCheck = True
                 elif split_text[1] == 'showresult':
                     startTimeR = startTime
                     textR = split_text[3:]
                 continue
 
-            elif vote_check:  # 生成投票
-                endTimeV = sec2hms(round(vpos/100, 2))
+            elif voteCheck:  # 生成投票
+                endTimeV = sec2hms(vpos)
                 eventQBg = 'Dialogue: 4,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
                     math.floor(videoWidth/2))+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
                 eventQText = 'Dialogue: 5,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\pos('+str(math.floor(videoWidth/2))+','+str(
@@ -279,7 +273,7 @@ def xml2ass(xml_name):
                                     fontSize_anketo)+'\\an5\\bord0\\1c&H76FAF8&\\pos('+str(X[i])+','+str(Y[j]+math.floor(bgHeight/2))+')}'+str(int(textR[num])/10)+'%\n'
                                 eventO += voteResultBg + voteResultext
                             num += 1
-                vote_check = False
+                voteCheck = False
 
             if re.search('/vote', text) == None:  # 处理非投票运营弹幕
                 startTimeW = startTime
@@ -336,7 +330,7 @@ def xml2ass(xml_name):
                 ex = 0-len(text)*(danmakuSize+danmakuFontSpace)
                 ey = danmakuLineHeight*(passageway_index)
                 # 生成弹幕行并加入总弹幕
-                if premium == '24' or premium == '25':
+                if premium == '0':
                     eventD += 'Dialogue: 2,'+startTime+','+endTime + \
                         ',Danmaku,,0,0,0,,{\\an7\\alpha80\\move('+str(sx)+','+str(
                             sy)+','+str(ex)+','+str(ey)+')'+assColor+'}'+text+'\n'
