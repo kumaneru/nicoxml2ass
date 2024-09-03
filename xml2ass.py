@@ -48,7 +48,7 @@ def xml2ass(xml_name):
     AAHighAdjust = 0  # AA弹幕行间间隔
     OfficeSize = 40  # 运营弹幕字体大小
     OfficeBgHeight = 72  # 运营弹幕背景遮盖高度
-    fontName = 'SourceHanSansJP-Bold'
+    fontName = 'Source Han Sans JP'
     danmakuSize = 68
     danmakuLineHeight = 64  # 弹幕行高度
     danmakuFontSpace = 2  # 弹幕行间间隔
@@ -102,7 +102,7 @@ def xml2ass(xml_name):
 
         # 过滤弹幕
         has_ngword = False
-        for ngword in ['※ NGコメント', 'Display Forbidden', 'Hidden Restricted',  '30分延長しました', 'Ended', '/redirect', 'Display Restricted']:
+        for ngword in ['ニコニ広告しました', 'Display Forbidden', 'Hidden Restricted',  '30分延長しました', 'Ended', 'Display Restricted']:
             if ngword in text:
                 has_ngword = True
                 break
@@ -308,20 +308,19 @@ def xml2ass(xml_name):
                     dm_count = 0
                 vpos_next_min = float('inf')
                 vpos_next = int(vpos+1280/(len(text)*70+1280) *
-                                timeDanmaku*100)  # 弹幕不是太密集时，控制同一条通道的弹幕不超过前一行
+                                timeDanmaku)  # 弹幕不是太密集时，控制同一条通道的弹幕不超过前一行
                 dm_count += 1
                 for i in range(limitLineAmount):
                     if vpos_next >= danmakuPassageway[i]:
                         passageway_index = i
-                        danmakuPassageway[i] = vpos+timeDanmaku*100
+                        danmakuPassageway[i] = vpos+timeDanmaku
                         break
                     elif danmakuPassageway[i] < vpos_next_min:
                         vpos_next_min = danmakuPassageway[i]
                         Passageway_min = i
                     if i == limitLineAmount-1 and vpos_next < vpos_next_min:
                         passageway_index = Passageway_min
-                        danmakuPassageway[Passageway_min] = vpos + \
-                            timeDanmaku*100
+                        danmakuPassageway[Passageway_min] = vpos + timeDanmaku
                 if dm_count > 11:
                     passageway_index = dm_count % 11
                 # 计算弹幕位置
