@@ -147,7 +147,6 @@ def xml2ass(xml_name):
             if color == '000000':
                 assColor += '\\3c&HFFFFFF&'
         if user_id in officeId:  # 处理运营弹幕
-
             if re.search(r'^/vote(?! stop)', text):  # 处理投票开始和投票结果
                 split_text = shlex.split(text)
                 split_text = [t.replace('\\', '') for t in split_text]
