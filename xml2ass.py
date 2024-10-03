@@ -12,6 +12,27 @@ def sec2hms(sec):  # 转换时间的函数
         str(int((sec % 3600)//60)).zfill(2)+':'+str(round(sec % 60, 2))
     return hms
 
+COLOR_MAP = {'black': '000000', 'white': 'FFFFFF', 'red': 'FF0000', 'green': '00ff00', 'yellow': 'FFFF00', 'blue': '0000FF', 'orange': 'ffcc00',
+            'pink': 'FF8080', 'cyan': '00FFFF', 'purple': 'C000FF', 'niconicowhite': 'cccc99', 'white2': 'cccc99', 'truered': 'cc0033',
+            'red2': 'cc0033', 'passionorange': 'ff6600', 'orange2': 'ff6600', 'madyellow': '999900', 'yellow2': '999900', 'elementalgreen': '00cc66',
+            'green2': '00cc66', 'marineblue': '33ffcc', 'blue2': '33ffcc', 'nobleviolet': '6633cc', 'purple2': '6633cc'}  # 颜色列表
+
+def get_color(styles):
+    color = 'FFFFFF'
+    color_important = None
+
+    for style in styles:  # 颜色调整
+        m = re.match(r'#([0-9A-Fa-f]{6})', style)
+        if m:
+            color_important = str(m[1])
+        elif style in COLOR_MAP:
+            color = COLOR_MAP[style]
+    color = color_important or color
+    assColor = f'\\1c&H{color[-2:]}{color[2:-2]}{color[:2]}&'
+    if color == '000000':
+        assColor += '\\3c&HFFFFFF&'
+    return assColor
+
 
 def xml2ass(xml_name):
     with open(xml_name, 'r', encoding='utf-8') as fx:
@@ -57,10 +78,6 @@ def xml2ass(xml_name):
     vpos_now = 0
     include_aa = False  # 判断是否有AA弹幕
     voteCheck = False  # 判断投票是否开启
-    colorMap = {'black': '000000', 'white': 'FFFFFF', 'red': 'FF0000', 'green': '00ff00', 'yellow': 'FFFF00', 'blue': '0000FF', 'orange': 'ffcc00',
-                'pink': 'FF8080', 'cyan': '00FFFF', 'purple': 'C000FF', 'niconicowhite': 'cccc99', 'white2': 'cccc99', 'truered': 'cc0033',
-                'red2': 'cc0033', 'passionorange': 'ff6600', 'orange2': 'ff6600', 'madyellow': '999900', 'yellow2': '999900', 'elementalgreen': '00cc66',
-                'green2': '00cc66', 'marineblue': '33ffcc', 'blue2': '33ffcc', 'nobleviolet': '6633cc', 'purple2': '6633cc'}  # 颜色列表
     videoWidth = 1280  # 视频宽度，默认3M码率生放，不用改
     videoHeight = 720  # 视频高度，默认3M码率生放，不用改
     fontSize = 64  # 普通弹幕字体大小
@@ -79,29 +96,29 @@ def xml2ass(xml_name):
         premium = str(chat.get('premium', ''))
         if chat.get('user_id'):
             user_id = chat['user_id']
-        isOfficial = True if premium=='3' or user_id == '-1'  else False
+        isOfficial = True if premium in ['2', '3'] or user_id == '-1'  else False
         if chat.get('text'):
-            text = chat['text'] 
+            text = chat['text']
         elif isOfficial and voteCheck:
             text = '/vote stop'
         else:
             continue  # 文本
         mail = chat.get('mail', '')  # mail,颜色，位置，大小，AA
         vpos = int(chat['vpos']) # 读取时间
+        # NCV now use whole second for operator's comment's vpos instead of 1/100 second for some reason so fix it here.
+        # /nicoad seems isn't affected by this.
+        if premium == '2' and not '/nicoad' in text:
+            vpos *= 100
         startTime = sec2hms(round(vpos/100, 2))  # 转换开始时间
         endTime = sec2hms(round(vpos/100, 2)+timeDanmaku) if not isOfficial else sec2hms(round(vpos/100, 2)+14)  # 转换结束时间
-        color = 'ffffff'
-        color_important = 0
-
         # 过滤弹幕
         has_ngword = False
-        for ngword in ['ニコニ広告しました', 'Display Forbidden', 'Hidden Restricted',  '30分延長しました', 'Ended', 'Display Restricted', 'Hide Marquee', '【ギフト貢献']:
+        for ngword in ['※ NGコメント', '/clear', '/trialpanel',  '/spi', '/disconnect', '/gift', '/commentlock', '/nicoad', '/info', '/jump', '/play', '/redirect',
+            'ニコニ広告しました', 'Display Forbidden', 'Hidden Restricted',  '30分延長しました', 'Ended', 'Display Restricted', 'Hide Marquee', '【ギフト貢献']:
             if ngword in text:
                 has_ngword = True
                 break
         if has_ngword:
-            continue
-        if premium == '2':
             continue
 
         if officialCheck:  # 释放之前捕捉的运营弹幕
@@ -110,32 +127,24 @@ def xml2ass(xml_name):
                     endTimeW = startTime
                 eventBg = 'Dialogue: 4,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
                     math.floor(videoWidth/2))+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
-                if 'http' in textW:
-                    link = re.compile('\(http(.+?)\)')
-                    textW = link.sub('', textW)
-                    eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(math.floor(videoWidth/2))+','+str(
-                        math.floor(OfficeBgHeight/2))+')\\bord0\\1c&HFF8000&\\u1\\fsp0}'+textW.replace('/perm ', '')+'\n'
+                textW = textW.replace('/perm', '')
+                if 'href' in textW or 'http' in textW:
+                    textW = re.sub(r'<a href=.*?><u>(.+?)</u></a>', r'\1', textW)
+                    textW = re.sub(r'\(?http.*\)?$', '', textW)
+                    assColorW = '\\1c&HFF8000&\\u1'
                 else:
-                    eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(math.floor(videoWidth/2))+','+str(
-                        math.floor(OfficeBgHeight/2))+')\\bord0'+assColor+'\\fsp0}'+textW.replace('/perm ', '')+'\n'
+                    assColorW = get_color([])
+                eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(math.floor(videoWidth/2))+','+str(
+                    math.floor(OfficeBgHeight/2))+')\\bord0'+assColorW+'\\fsp0}'+textW.replace('/perm ', '')+'\n'
                 if len(text) > 50:
                     eventDm = eventDm.replace('fsp0', 'fsp0\\fs30')
                 eventO += eventBg+eventDm.replace('　', '  ')
                 officialCheck = False
 
-        for style in mail.split(' '):  # 颜色调整
-            if re.match(r'#([0-9A-Fa-f]{6})', style):
-                m = re.match(r'#([0-9A-Fa-f]{6})', style)
-                color_important = str(m[1])
-            elif style in colorMap:
-                color = colorMap[style]
-            if color_important:
-                color = color_important
-            assColor = f'\\1c&H{color[-2:]}{color[2:-2]}{color[:2]}&'
-            if color == '000000':
-                assColor += '\\3c&HFFFFFF&'
+        assColor = get_color(mail.split(' '))
         if isOfficial:  # 处理运营弹幕
-            if re.search(r'Poll$', text):  # 处理投票开始和投票结果
+             # 处理投票开始和投票结果 for kari new
+            if re.search(r'Poll$', text):
                 split_text = shlex.split(text)
                 split_text = [t.replace('\\', '') for t in split_text]
                 startTimeQ = startTime
@@ -144,12 +153,50 @@ def xml2ass(xml_name):
                 textR = []
                 voteCheck = True
                 continue
-            elif voteCheck and 'Result' in text:
+            if voteCheck and 'Result' in text:
                 textR = re.findall(r'[0-9.]+%',text)
                 startTimeR = startTime
                 continue
+            #<chat date="1726749046" date_usec="125440000" thread="" premium="2" user_id="" vpos="2446">/vote new 【アンケート結果】本日の番組はいかがでしたか？
+            # 　1：97.6% とても良かった
+            # 　2：1.7% まぁまぁ良かった
+            # 　3：0.3% ふつうだった
+            # 　4：0.2% あまり良くなかった
+            # 　5：0.2% 良くなかった</chat>
+            # for NCV newest
+            m = re.search(r'^/vote new\s+\【(.+?)\】(.+)', text)
+            if m: # 处理投票开始和投票结果
+                if m[1] == 'アンケート開始':
+                    startTimeQ = startTime
+                    textQ = m[2]
+                    textO = [re.search(r'^.*\d+：(.+)$', t)[1] for t in text.splitlines()[1:]]
+                    textR = []
+                    voteCheck = True
+                    continue
+                elif m[1] == 'アンケート結果':
+                    startTimeR = startTime
+                    textR = [re.search(r'^.*\d+：(.+%).*$', t)[1] for t in text.splitlines()[1:]]
+                    continue
+            # for older websocket response
+            # /vote start 本日の番組はいかがでしたか？ とても良かった まぁまぁ良かった ふつうだった あまり良くなかった 良くなかった
+            # /vote showresult per 980 11 4 3 2
+            # /vote stop
+            if re.search(r'^/vote (start|showresult)', text):  # 处理投票开始和投票结果
+                split_text = shlex.split(text)
+                split_text = [t.replace('\\', '') for t in split_text]
+                if split_text[1] == 'start':
+                    startTimeQ = startTime
+                    textQ = split_text[2]
+                    textO = split_text[3:]
+                    textR = []
+                    voteCheck = True
+                elif split_text[1] == 'showresult':
+                    startTimeR = startTime
+                    textR = split_text[3:]
+                    textR = [f'{int(t)/10:.1f}%' for t in textR]
+                continue
 
-            elif voteCheck:  # 生成投票
+            if voteCheck:  # 生成投票
                 endTimeV = sec2hms(round(vpos/100, 2))
                 eventQBg = 'Dialogue: 4,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
                     math.floor(videoWidth/2))+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
@@ -267,13 +314,13 @@ def xml2ass(xml_name):
                                 eventO += voteResultBg + voteResultext
                             num += 1
                 voteCheck = False
-
-            else:  # 处理非投票运营弹幕
-                startTimeW = startTime
-                endTimeW = endTime
-                textW = text
-                vposW = vpos
-                officialCheck = True
+                continue
+            # 处理非投票运营弹幕
+            startTimeW = startTime
+            endTimeW = endTime
+            textW = text
+            vposW = vpos
+            officialCheck = True
 
         else:  # 处理用户弹幕
             pos = 0
@@ -341,19 +388,7 @@ def xml2ass(xml_name):
                 vpos = int(chat['vpos'])
                 startTime = sec2hms(round(vpos/100, 2))
                 endTime = sec2hms(round(vpos/100, 2)+timeDanmaku)
-                color = 'FFFFFF'
-                color_important = 0
-                for style in sytles:
-                    if re.match(r'#([0-9A-Fa-f]{6})', style):
-                        m = re.match(r'#([0-9A-Fa-f]{6})', style)
-                        color_important = str(m[1])
-                    elif style in colorMap:
-                        color = colorMap[style]
-                if color_important:
-                    color = color_important
-                assColor = f'\\1c&H{color[-2:]}{color[2:-2]}{color[:2]}&'
-                if color == '000000':
-                    assColor += '\\3c&HFFFFFF&'
+                assColor = get_color(sytles)
                 # 分成多行生成弹幕并整合成完整AA弹幕
                 textAA = text.split('\n')
                 for a in range(len(textAA)):
