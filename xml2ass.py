@@ -138,7 +138,8 @@ def xml2ass(xml_name):
 
         assColor = get_color(mail.split(' '))
         if isOfficial:  # 处理运营弹幕
-            if re.search(r'Poll$', text):  # 处理投票开始和投票结果
+             # 处理投票开始和投票结果 for kari new
+            if re.search(r'Poll$', text):
                 split_text = shlex.split(text)
                 split_text = [t.replace('\\', '') for t in split_text]
                 startTimeQ = startTime
@@ -157,6 +158,7 @@ def xml2ass(xml_name):
             # 　3：0.3% ふつうだった
             # 　4：0.2% あまり良くなかった
             # 　5：0.2% 良くなかった</chat>
+            # for NCV newest
             m = re.search(r'^/vote new\s+\【(.+?)\】(.+)', text)
             if m: # 处理投票开始和投票结果
                 if m[1] == 'アンケート開始':
@@ -168,8 +170,27 @@ def xml2ass(xml_name):
                     continue
                 elif m[1] == 'アンケート結果':
                     startTimeR = startTime
-                    textR = [re.search(r'^.*\d+：(.+)%.*$', t)[1] for t in text.splitlines()[1:]]
+                    textR = [re.search(r'^.*\d+：(.+%).*$', t)[1] for t in text.splitlines()[1:]]
                     continue
+            # for older websocket response
+            # /vote start 本日の番組はいかがでしたか？ とても良かった まぁまぁ良かった ふつうだった あまり良くなかった 良くなかった
+            # /vote showresult per 980 11 4 3 2
+            # /vote stop
+            if re.search(r'^/vote(?! stop)', text):  # 处理投票开始和投票结果
+                split_text = shlex.split(text)
+                split_text = [t.replace('\\', '') for t in split_text]
+                if split_text[1] == 'start':
+                    startTimeQ = startTime
+                    textQ = split_text[2]
+                    textO = split_text[3:]
+                    textR = []
+                    voteCheck = True
+                elif split_text[1] == 'showresult':
+                    startTimeR = startTime
+                    textR = split_text[3:]
+                    textR = [f'{int(t)/10:.1f}%' for t in textR]
+                continue
+
             if voteCheck:  # 生成投票
                 endTimeV = sec2hms(round(vpos/100, 2))
                 eventQBg = 'Dialogue: 4,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
