@@ -96,7 +96,7 @@ def xml2ass(xml_name):
         premium = str(chat.get('premium', ''))
         if chat.get('user_id'):
             user_id = chat['user_id']
-        isOfficial = True if premium=='3' or user_id == '-1'  else False
+        isOfficial = True if premium in ['2', '3'] or user_id == '-1'  else False
         if chat.get('text'):
             text = chat['text']
         elif isOfficial and voteCheck:
@@ -107,7 +107,6 @@ def xml2ass(xml_name):
         vpos = int(chat['vpos']) # 读取时间
         startTime = sec2hms(round(vpos/100, 2))  # 转换开始时间
         endTime = sec2hms(round(vpos/100, 2)+timeDanmaku) if not isOfficial else sec2hms(round(vpos/100, 2)+14)  # 转换结束时间
-
         # 过滤弹幕
         has_ngword = False
         for ngword in ['ニコニ広告しました', 'Display Forbidden', 'Hidden Restricted',  '30分延長しました', 'Ended', 'Display Restricted', 'Hide Marquee', '【ギフト貢献']:
@@ -115,8 +114,6 @@ def xml2ass(xml_name):
                 has_ngword = True
                 break
         if has_ngword:
-            continue
-        if premium == '2':
             continue
 
         if officialCheck:  # 释放之前捕捉的运营弹幕
@@ -150,12 +147,30 @@ def xml2ass(xml_name):
                 textR = []
                 voteCheck = True
                 continue
-            elif voteCheck and 'Result' in text:
+            if voteCheck and 'Result' in text:
                 textR = re.findall(r'[0-9.]+%',text)
                 startTimeR = startTime
                 continue
-
-            elif voteCheck:  # 生成投票
+            #<chat date="1726749046" date_usec="125440000" thread="" premium="2" user_id="" vpos="2446">/vote new 【アンケート結果】本日の番組はいかがでしたか？
+            # 　1：97.6% とても良かった
+            # 　2：1.7% まぁまぁ良かった
+            # 　3：0.3% ふつうだった
+            # 　4：0.2% あまり良くなかった
+            # 　5：0.2% 良くなかった</chat>
+            m = re.search(r'^/vote new\s+\【(.+?)\】(.+)', text)
+            if m: # 处理投票开始和投票结果
+                if m[1] == 'アンケート開始':
+                    startTimeQ = startTime
+                    textQ = m[2]
+                    textO = [re.search(r'^.*\d+：(.+)$', t)[1] for t in text.splitlines()[1:]]
+                    textR = []
+                    voteCheck = True
+                    continue
+                elif m[1] == 'アンケート結果':
+                    startTimeR = startTime
+                    textR = [re.search(r'^.*\d+：(.+)%.*$', t)[1] for t in text.splitlines()[1:]]
+                    continue
+            if voteCheck:  # 生成投票
                 endTimeV = sec2hms(round(vpos/100, 2))
                 eventQBg = 'Dialogue: 4,'+startTimeQ+','+endTimeV+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
                     math.floor(videoWidth/2))+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
@@ -273,13 +288,13 @@ def xml2ass(xml_name):
                                 eventO += voteResultBg + voteResultext
                             num += 1
                 voteCheck = False
-
-            else:  # 处理非投票运营弹幕
-                startTimeW = startTime
-                endTimeW = endTime
-                textW = text
-                vposW = vpos
-                officialCheck = True
+                continue
+            # 处理非投票运营弹幕
+            startTimeW = startTime
+            endTimeW = endTime
+            textW = text
+            vposW = vpos
+            officialCheck = True
 
         else:  # 处理用户弹幕
             pos = 0
