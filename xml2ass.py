@@ -12,6 +12,27 @@ def sec2hms(sec):  # 转换时间的函数
         str(int((sec % 3600)//60)).zfill(2)+':'+str(round(sec % 60, 2))
     return hms
 
+COLOR_MAP = {'black': '000000', 'white': 'FFFFFF', 'red': 'FF0000', 'green': '00ff00', 'yellow': 'FFFF00', 'blue': '0000FF', 'orange': 'ffcc00',
+            'pink': 'FF8080', 'cyan': '00FFFF', 'purple': 'C000FF', 'niconicowhite': 'cccc99', 'white2': 'cccc99', 'truered': 'cc0033',
+            'red2': 'cc0033', 'passionorange': 'ff6600', 'orange2': 'ff6600', 'madyellow': '999900', 'yellow2': '999900', 'elementalgreen': '00cc66',
+            'green2': '00cc66', 'marineblue': '33ffcc', 'blue2': '33ffcc', 'nobleviolet': '6633cc', 'purple2': '6633cc'}  # 颜色列表
+
+def get_color(styles):
+    color = 'FFFFFF'
+    color_important = None
+
+    for style in styles:  # 颜色调整
+        m = re.match(r'#([0-9A-Fa-f]{6})', style)
+        if m:
+            color_important = str(m[1])
+        elif style in COLOR_MAP:
+            color = COLOR_MAP[style]
+    color = color_important or color
+    assColor = f'\\1c&H{color[-2:]}{color[2:-2]}{color[:2]}&'
+    if color == '000000':
+        assColor += '\\3c&HFFFFFF&'
+    return assColor
+
 
 def xml2ass(xml_name):
     with open(xml_name, 'r', encoding='utf-8') as fx:
@@ -57,10 +78,6 @@ def xml2ass(xml_name):
     vpos_now = 0
     include_aa = False  # 判断是否有AA弹幕
     voteCheck = False  # 判断投票是否开启
-    colorMap = {'black': '000000', 'white': 'FFFFFF', 'red': 'FF0000', 'green': '00ff00', 'yellow': 'FFFF00', 'blue': '0000FF', 'orange': 'ffcc00',
-                'pink': 'FF8080', 'cyan': '00FFFF', 'purple': 'C000FF', 'niconicowhite': 'cccc99', 'white2': 'cccc99', 'truered': 'cc0033',
-                'red2': 'cc0033', 'passionorange': 'ff6600', 'orange2': 'ff6600', 'madyellow': '999900', 'yellow2': '999900', 'elementalgreen': '00cc66',
-                'green2': '00cc66', 'marineblue': '33ffcc', 'blue2': '33ffcc', 'nobleviolet': '6633cc', 'purple2': '6633cc'}  # 颜色列表
     videoWidth = 1280  # 视频宽度，默认3M码率生放，不用改
     videoHeight = 720  # 视频高度，默认3M码率生放，不用改
     fontSize = 64  # 普通弹幕字体大小
@@ -81,7 +98,7 @@ def xml2ass(xml_name):
             user_id = chat['user_id']
         isOfficial = True if premium=='3' or user_id == '-1'  else False
         if chat.get('text'):
-            text = chat['text'] 
+            text = chat['text']
         elif isOfficial and voteCheck:
             text = '/vote stop'
         else:
@@ -90,8 +107,6 @@ def xml2ass(xml_name):
         vpos = int(chat['vpos']) # 读取时间
         startTime = sec2hms(round(vpos/100, 2))  # 转换开始时间
         endTime = sec2hms(round(vpos/100, 2)+timeDanmaku) if not isOfficial else sec2hms(round(vpos/100, 2)+14)  # 转换结束时间
-        color = 'ffffff'
-        color_important = 0
 
         # 过滤弹幕
         has_ngword = False
@@ -110,30 +125,21 @@ def xml2ass(xml_name):
                     endTimeW = startTime
                 eventBg = 'Dialogue: 4,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\p1\\pos('+str(
                     math.floor(videoWidth/2))+','+str(math.floor(OfficeBgHeight/2))+')\\bord0\\1c&H000000&\\1a&H78&}'+officeBg+'\n'
-                if 'http' in textW:
-                    link = re.compile('\(http(.+?)\)')
-                    textW = link.sub('', textW)
-                    eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(math.floor(videoWidth/2))+','+str(
-                        math.floor(OfficeBgHeight/2))+')\\bord0\\1c&HFF8000&\\u1\\fsp0}'+textW.replace('/perm ', '')+'\n'
+                textW = textW.replace('/perm', '')
+                if 'href' in textW or 'http' in textW:
+                    textW = re.sub(r'<a href=.*?><u>(.+?)</u></a>', r'\1', textW)
+                    textW = re.sub(r'\(?http.*\)?$', '', textW)
+                    assColorW = '\\1c&HFF8000&\\u1'
                 else:
-                    eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(math.floor(videoWidth/2))+','+str(
-                        math.floor(OfficeBgHeight/2))+')\\bord0'+assColor+'\\fsp0}'+textW.replace('/perm ', '')+'\n'
+                    assColorW = get_color([])
+                eventDm = 'Dialogue: 5,'+startTimeW+','+endTimeW+',Office,,0,0,0,,{\\an5\\pos('+str(math.floor(videoWidth/2))+','+str(
+                    math.floor(OfficeBgHeight/2))+')\\bord0'+assColorW+'\\fsp0}'+textW.replace('/perm ', '')+'\n'
                 if len(text) > 50:
                     eventDm = eventDm.replace('fsp0', 'fsp0\\fs30')
                 eventO += eventBg+eventDm.replace('　', '  ')
                 officialCheck = False
 
-        for style in mail.split(' '):  # 颜色调整
-            if re.match(r'#([0-9A-Fa-f]{6})', style):
-                m = re.match(r'#([0-9A-Fa-f]{6})', style)
-                color_important = str(m[1])
-            elif style in colorMap:
-                color = colorMap[style]
-            if color_important:
-                color = color_important
-            assColor = f'\\1c&H{color[-2:]}{color[2:-2]}{color[:2]}&'
-            if color == '000000':
-                assColor += '\\3c&HFFFFFF&'
+        assColor = get_color(mail.split(' '))
         if isOfficial:  # 处理运营弹幕
             if re.search(r'Poll$', text):  # 处理投票开始和投票结果
                 split_text = shlex.split(text)
@@ -341,19 +347,7 @@ def xml2ass(xml_name):
                 vpos = int(chat['vpos'])
                 startTime = sec2hms(round(vpos/100, 2))
                 endTime = sec2hms(round(vpos/100, 2)+timeDanmaku)
-                color = 'FFFFFF'
-                color_important = 0
-                for style in sytles:
-                    if re.match(r'#([0-9A-Fa-f]{6})', style):
-                        m = re.match(r'#([0-9A-Fa-f]{6})', style)
-                        color_important = str(m[1])
-                    elif style in colorMap:
-                        color = colorMap[style]
-                if color_important:
-                    color = color_important
-                assColor = f'\\1c&H{color[-2:]}{color[2:-2]}{color[:2]}&'
-                if color == '000000':
-                    assColor += '\\3c&HFFFFFF&'
+                assColor = get_color(sytles)
                 # 分成多行生成弹幕并整合成完整AA弹幕
                 textAA = text.split('\n')
                 for a in range(len(textAA)):
