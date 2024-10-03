@@ -105,11 +105,16 @@ def xml2ass(xml_name):
             continue  # 文本
         mail = chat.get('mail', '')  # mail,颜色，位置，大小，AA
         vpos = int(chat['vpos']) # 读取时间
+        # NCV now use whole second for operator's comment's vpos instead of 1/100 second for some reason so fix it here.
+        # /nicoad seems isn't affected by this.
+        if premium == '2' and not '/nicoad' in text:
+            vpos *= 100
         startTime = sec2hms(round(vpos/100, 2))  # 转换开始时间
         endTime = sec2hms(round(vpos/100, 2)+timeDanmaku) if not isOfficial else sec2hms(round(vpos/100, 2)+14)  # 转换结束时间
         # 过滤弹幕
         has_ngword = False
-        for ngword in ['ニコニ広告しました', 'Display Forbidden', 'Hidden Restricted',  '30分延長しました', 'Ended', 'Display Restricted', 'Hide Marquee', '【ギフト貢献']:
+        for ngword in ['※ NGコメント', '/clear', '/trialpanel',  '/spi', '/disconnect', '/gift', '/commentlock', '/nicoad', '/info', '/jump', '/play', '/redirect',
+            'ニコニ広告しました', 'Display Forbidden', 'Hidden Restricted',  '30分延長しました', 'Ended', 'Display Restricted', 'Hide Marquee', '【ギフト貢献']:
             if ngword in text:
                 has_ngword = True
                 break
@@ -176,7 +181,7 @@ def xml2ass(xml_name):
             # /vote start 本日の番組はいかがでしたか？ とても良かった まぁまぁ良かった ふつうだった あまり良くなかった 良くなかった
             # /vote showresult per 980 11 4 3 2
             # /vote stop
-            if re.search(r'^/vote(?! stop)', text):  # 处理投票开始和投票结果
+            if re.search(r'^/vote (start|showresult)', text):  # 处理投票开始和投票结果
                 split_text = shlex.split(text)
                 split_text = [t.replace('\\', '') for t in split_text]
                 if split_text[1] == 'start':
