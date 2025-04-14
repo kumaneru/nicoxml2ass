@@ -57,8 +57,16 @@ def xml2ass(xml_name):
                 if 'content' in d:
                     d['text'] = d.pop('content')
                 chats.append(d)
-
-    chats.sort(key=lambda x: int(x.get('vpos') or 0))  # 按 vpos 排序
+    
+    if not chats[1].get('premium'):
+        chats.sort(key=lambda x: int(x.get('vpos') or 0))  # 按 vpos 排序
+    else:
+        chats.sort(key=lambda x: int(x.get('date') or 0))  # 普通nico按 date 排序
+    for i in range(len(chats)):
+        if chats[i]['vpos'] != '0':  #确定开始时的date
+            dateStart = int(chats[i]['date']) - int(int(chats[i]['vpos'])//100)
+            break
+        dateStart = 0
 
     # 弹幕参数
     AASize = 18  # AA弹幕字体大小
@@ -93,7 +101,7 @@ def xml2ass(xml_name):
     for chat in chats:
         if not chat.get('vpos'):
             continue
-        premium = str(chat.get('premium', ''))
+        premium = chat.get('premium')
         if chat.get('user_id'):
             user_id = chat['user_id']
         isOfficial = True if premium in ['2', '3'] or user_id == '-1'  else False
@@ -104,7 +112,7 @@ def xml2ass(xml_name):
         else:
             continue  # 文本
         mail = chat.get('mail', '')  # mail,颜色，位置，大小，AA
-        vpos = int(chat['vpos']) # 读取时间
+        vpos = int(chat['vpos']) if chat['vpos'] != '0' and not chat.get('premium') else (int(chat['date']) - dateStart) *100 # 读取时间
         # NCV now use whole second for operator's comment's vpos instead of 1/100 second for some reason so fix it here.
         # /nicoad seems isn't affected by this.
         if premium == '2' and not '/nicoad' in text:
@@ -114,7 +122,7 @@ def xml2ass(xml_name):
         # 过滤弹幕
         has_ngword = False
         for ngword in ['※ NGコメント', '/clear', '/trialpanel',  '/spi', '/disconnect', '/gift', '/commentlock', '/nicoad', '/info', '/jump', '/play', '/redirect',
-            'ニコニ広告しました', 'Display Forbidden', 'Hidden Restricted',  '30分延長しました', 'Ended', 'Display Restricted', 'Hide Marquee', '【ギフト貢献']:
+            'ニコニ広告しました', 'Display Forbidden', 'Hidden Restricted',  '30分延長しました', 'Ended', 'Display Restricted', 'Hide Marquee', '【ギフト貢献','/ichiba']:
             if ngword in text:
                 has_ngword = True
                 break
@@ -145,7 +153,7 @@ def xml2ass(xml_name):
         if isOfficial:  # 处理运营弹幕
              # 处理投票开始和投票结果 for kari new
             if re.search(r'Poll$', text):
-                split_text = shlex.split(text)
+                split_text = shlex.split(text.replace('/enquete',''))
                 split_text = [t.replace('\\', '') for t in split_text]
                 startTimeQ = startTime
                 textQ = split_text[0]
@@ -318,7 +326,7 @@ def xml2ass(xml_name):
             # 处理非投票运营弹幕
             startTimeW = startTime
             endTimeW = endTime
-            textW = text
+            textW = text.replace('/marquee ', '')
             vposW = vpos
             officialCheck = True
 
@@ -342,7 +350,7 @@ def xml2ass(xml_name):
             elif pos == 8:  # 顶部弹幕
                 eventD += 'Dialogue: 2,'+startTime+','+endTime + \
                     ',Danmaku,,0,0,0,,{\\an8'+assColor+'}'+text+'\n'
-            elif pos == 0:  # 普通滚动弹幕
+            else:  # 普通滚动弹幕
                 if vpos > vpos_now:
                     vpos_now = vpos
                     dm_count = 0
@@ -358,10 +366,9 @@ def xml2ass(xml_name):
                     elif danmakuPassageway[i] < vpos_next_min:
                         vpos_next_min = danmakuPassageway[i]
                         Passageway_min = i
-                    if i == limitLineAmount-1 and vpos_next < vpos_next_min:
+                    elif i == limitLineAmount-1 and vpos_next < vpos_next_min:
                         passageway_index = Passageway_min
-                        danmakuPassageway[Passageway_min] = vpos + \
-                            timeDanmaku*100
+                        danmakuPassageway[Passageway_min] = vpos + timeDanmaku*100
                 if dm_count > 11:
                     passageway_index = dm_count % 11
                 # 计算弹幕位置
