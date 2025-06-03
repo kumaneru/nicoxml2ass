@@ -57,10 +57,7 @@ def xml2ass(xml_name):
                     d['text'] = d.pop('content')
                 chats.append(d)
     
-    if not chats[1].get('premium'):
-        chats.sort(key=lambda x: int(x.get('vpos') or 0))  # 按 vpos 排序
-    else:
-        chats.sort(key=lambda x: int(x.get('date') or 0))  # 普通nico按 date 排序
+    chats.sort(key=lambda x: int(x.get('date') or 0))  # 按 date 排序
     for i in range(len(chats)):
         if chats[i]['vpos'] != '0':  #确定开始时的date
             dateStart = int(chats[i]['date']) - int(int(chats[i]['vpos'])//100)
