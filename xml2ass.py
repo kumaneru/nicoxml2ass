@@ -48,7 +48,11 @@ def xml2ass(xml_name):
         elif xml_name.lower().endswith('.json'):
             json_dict = json.load(fx)
             chats = []
-            for d in json_dict:
+            for di in json_dict:
+                if 'message' in di:
+                    d = di['message']
+                else:
+                    continue
                 if 'chat' in d:
                     d = d['chat']
                 if not 'vpos' in d:
@@ -57,9 +61,11 @@ def xml2ass(xml_name):
                     d['text'] = d.pop('content')
                 chats.append(d)
     
-    chats.sort(key=lambda x: int(x.get('date') or 0))  # 按 date 排序
+    chats.sort(key=lambda x: int(x.get('date') or 0))  # 普通nico按 date 排序
+    if 'auth0' in chats[0]['user_id']:  # nico+按 vpos 排序
+        chats.sort(key=lambda x: int(x.get('vpos') or 0))
     for i in range(len(chats)):
-        if chats[i]['vpos'] != '0':  #确定开始时的date
+        if chats[i]['vpos'] != '0' and 'date' in chats[i]:  #确定开始时的date
             dateStart = int(chats[i]['date']) - int(int(chats[i]['vpos'])//100)
             break
         dateStart = 0
@@ -100,6 +106,8 @@ def xml2ass(xml_name):
         premium = chat.get('premium')
         if chat.get('user_id'):
             user_id = chat['user_id']
+        else:
+            user_id = '0'
         isOfficial = True if premium in ['2', '3'] or user_id == '-1'  else False
         if chat.get('text'):
             text = chat['text']
@@ -108,13 +116,16 @@ def xml2ass(xml_name):
         else:
             continue  # 文本
         mail = chat.get('mail', '')  # mail,颜色，位置，大小，AA
-        if not chat.get('premium') and chat['vpos'] == '0':
-            chat['vpos'] = (int(chat['date']) - dateStart) * 100
+        #if not chat.get('premium') and chat['vpos'] == '0': #nico+有些vpos为0的弹幕是正确的所以不能全杀掉？
+            #chat['vpos'] = (int(chat['date']) - dateStart) * 100
         vpos = int(chat['vpos']) # 读取时间
         # NCV now use whole second for operator's comment's vpos instead of 1/100 second for some reason so fix it here.
         # /nicoad seems isn't affected by this.
         if premium == '2' and not '/nicoad' in text:
             vpos *= 100
+        vpos_date = (int(chat['date']) - dateStart) * 100
+        if vpos > vpos_date + 30000: # 部分弹幕的vpos时间有时会爆炸，按date时间修正
+            vpos = vpos_date
         startTime = sec2hms(round(vpos/100, 2))  # 转换开始时间
         endTime = sec2hms(round(vpos/100, 2)+timeDanmaku) if not isOfficial else sec2hms(round(vpos/100, 2)+14)  # 转换结束时间
         # 过滤弹幕
@@ -154,6 +165,8 @@ def xml2ass(xml_name):
                 startTimeQ = startTime
                 textQ = split_text[0]
                 textO = re.findall(r'\[(.+?)\]',text)
+                if textR != [] and len(textO) == len(textR) * 2:
+                    textO = [' '.join(textO[i:i+2]) for i in range(0, len(textO), 2)]
                 textR = []
                 voteCheck = True
                 continue
@@ -332,7 +345,7 @@ def xml2ass(xml_name):
                     elif danmakuPassageway[i] < vpos_next_min:
                         vpos_next_min = danmakuPassageway[i]
                         Passageway_min = i
-                    elif i == limitLineAmount-1 and vpos_next < vpos_next_min:
+                    if i == limitLineAmount-1 and vpos_next < vpos_next_min:
                         passageway_index = Passageway_min
                         danmakuPassageway[Passageway_min] = vpos + timeDanmaku*100
                 if dm_count > 11:
